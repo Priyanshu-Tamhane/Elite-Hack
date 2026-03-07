@@ -19,7 +19,7 @@ export default function RSVPManagementPage() {
   useEffect(() => {
     const authKey = sessionStorage.getItem("event_admin")
     if (authKey !== slug) {
-      router.push(`/event/${slug}/manage/login`)
+      router.push(`/event/${slug}/manage-login`)
       return
     }
 
