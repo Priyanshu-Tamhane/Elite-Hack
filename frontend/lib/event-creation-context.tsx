@@ -10,6 +10,7 @@ interface EventCreationData {
   endDate?: string
   startTime?: string
   venue?: string
+  bannerUrl?: string
 }
 
 interface EventCreationContextType {

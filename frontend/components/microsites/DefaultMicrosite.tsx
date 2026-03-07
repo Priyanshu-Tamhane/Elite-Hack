@@ -12,9 +12,9 @@ export function DefaultMicrosite({ event }: DefaultMicrositeProps) {
     <div className="min-h-screen bg-background">
       {/* Hero Section */}
       <section className="relative py-20 bg-gradient-to-br from-primary/10 to-accent">
-        {event.bannerImage && (
+        {event.bannerUrl && (
           <div className="absolute inset-0 opacity-20">
-            <img src={event.bannerImage} alt={event.eventName} className="w-full h-full object-cover" />
+            <img src={event.bannerUrl} alt={event.eventName} className="w-full h-full object-cover" />
           </div>
         )}
         <div className="container mx-auto px-4 relative z-10">

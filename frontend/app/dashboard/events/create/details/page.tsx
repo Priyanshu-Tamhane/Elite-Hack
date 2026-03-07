@@ -63,7 +63,7 @@ export default function CreateEventDetailsPage() {
   const [endDate, setEndDate] = useState("")
   const [startTime, setStartTime] = useState("")
   const [venue, setVenue] = useState("")
-  const [bannerImage, setBannerImage] = useState<string | null>(null)
+  const [bannerUrl, setBannerUrl] = useState("")
 
   // Load saved data on mount
   useEffect(() => {
@@ -78,7 +78,7 @@ export default function CreateEventDetailsPage() {
         setEndDate(data.endDate || "")
         setStartTime(data.startTime || "")
         setVenue(data.venue || "")
-        setBannerImage(data.bannerImage || null)
+        setBannerUrl(data.bannerUrl || "")
       } catch (error) {
         console.error("Failed to load saved data", error)
       }
@@ -98,10 +98,10 @@ export default function CreateEventDetailsPage() {
       endDate,
       startTime,
       venue,
-      bannerImage,
+      bannerUrl,
     }
     localStorage.setItem(STORAGE_KEY, JSON.stringify(formData))
-  }, [isLoaded, eventName, category, description, startDate, endDate, startTime, venue, bannerImage])
+  }, [isLoaded, eventName, category, description, startDate, endDate, startTime, venue, bannerUrl])
 
   const handleSaveDraft = () => {
     const formData = {
@@ -112,7 +112,7 @@ export default function CreateEventDetailsPage() {
       endDate,
       startTime,
       venue,
-      bannerImage,
+      bannerUrl,
     }
     localStorage.setItem(STORAGE_KEY, JSON.stringify(formData))
     toast({
@@ -121,27 +121,13 @@ export default function CreateEventDetailsPage() {
     })
   }
 
-  const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0]
-    if (file) {
-      if (file.size > 5 * 1024 * 1024) {
-        toast({
-          title: "File too large",
-          description: "Please select an image under 5MB.",
-          variant: "destructive",
-        })
-        return
-      }
-      
-      const reader = new FileReader()
-      reader.onloadend = () => {
-        setBannerImage(reader.result as string)
-        toast({
-          title: "Image uploaded",
-          description: "Banner image has been uploaded successfully.",
-        })
-      }
-      reader.readAsDataURL(file)
+  const validateImageUrl = (url: string) => {
+    if (!url) return true
+    try {
+      new URL(url)
+      return true
+    } catch {
+      return false
     }
   }
 
@@ -154,10 +140,10 @@ export default function CreateEventDetailsPage() {
       endDate,
       startTime,
       venue,
-      bannerImage,
+      bannerUrl,
     }
     localStorage.setItem(STORAGE_KEY, JSON.stringify(formData))
-    updateEventData({ eventName, category, description, startDate, endDate, startTime, venue })
+    updateEventData({ eventName, category, description, startDate, endDate, startTime, venue, bannerUrl })
     router.push("/dashboard/events/create/inventory")
   }
 
@@ -336,49 +322,33 @@ export default function CreateEventDetailsPage() {
             </p>
           </CardHeader>
           <CardContent>
-            <div className="space-y-2">
-              <Label className="flex items-center gap-2">
-                <Upload className="h-4 w-4" />
-                Event Banner Image
-              </Label>
-              {bannerImage ? (
+            <div className="space-y-4">
+              <div className="space-y-2">
+                <Label htmlFor="banner-url" className="flex items-center gap-2">
+                  <Upload className="h-4 w-4" />
+                  Event Banner Image URL
+                </Label>
+                <Input
+                  id="banner-url"
+                  type="url"
+                  placeholder="https://i.postimg.cc/your-image-url"
+                  value={bannerUrl}
+                  onChange={(e) => setBannerUrl(e.target.value)}
+                />
+                <p className="text-xs text-muted-foreground">
+                  Upload your image to <a href="https://postimages.org/" target="_blank" rel="noopener noreferrer" className="text-primary hover:underline">postimages.org</a> and paste the direct image URL here. Recommended size: 1200 x 600px
+                </p>
+              </div>
+              {bannerUrl && validateImageUrl(bannerUrl) && (
                 <div className="relative">
                   <img
-                    src={bannerImage}
-                    alt="Event banner"
+                    src={bannerUrl}
+                    alt="Event banner preview"
                     className="w-full h-64 object-cover rounded-lg"
+                    onError={(e) => {
+                      e.currentTarget.style.display = 'none'
+                    }}
                   />
-                  <Button
-                    variant="destructive"
-                    size="sm"
-                    className="absolute top-2 right-2"
-                    onClick={() => setBannerImage(null)}
-                  >
-                    Remove
-                  </Button>
-                </div>
-              ) : (
-                <div className="flex flex-col items-center justify-center rounded-lg border-2 border-dashed p-8">
-                  <Upload className="h-10 w-10 text-muted-foreground" />
-                  <p className="mt-4 text-sm font-medium">Click to upload or drag and drop</p>
-                  <p className="text-xs text-muted-foreground">
-                    Recommended size: 1200 x 600px (JPG, PNG, max 5MB)
-                  </p>
-                  <input
-                    type="file"
-                    accept="image/*"
-                    onChange={handleFileUpload}
-                    className="hidden"
-                    id="banner-upload"
-                  />
-                  <Button
-                    variant="outline"
-                    className="mt-4"
-                    onClick={() => document.getElementById('banner-upload')?.click()}
-                    type="button"
-                  >
-                    Browse Files
-                  </Button>
                 </div>
               )}
             </div>

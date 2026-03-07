@@ -1,19 +1,31 @@
 "use client"
 
 import { useState, useEffect } from "react"
-import { useParams } from "next/navigation"
+import { useParams, useRouter } from "next/navigation"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { Users, Calendar, DollarSign, Eye } from "lucide-react"
+import { Users, Calendar, DollarSign, Eye, LogOut } from "lucide-react"
 import Link from "next/link"
 import { Button } from "@/components/ui/button"
+import { useToast } from "@/hooks/use-toast"
 
 export default function EventManageDashboard() {
   const params = useParams()
+  const router = useRouter()
+  const { toast } = useToast()
   const slug = params.slug as string
   const [event, setEvent] = useState<any>(null)
   const [registrations, setRegistrations] = useState<any[]>([])
 
   useEffect(() => {
+    // Check authentication
+    const authKey = `event_manage_auth_${slug}`
+    const isAuthenticated = localStorage.getItem(authKey)
+    
+    if (isAuthenticated !== "true") {
+      router.push(`/event/${slug}/manage/login`)
+      return
+    }
+
     const publishedEvents = JSON.parse(localStorage.getItem("published_events") || "[]")
     const foundEvent = publishedEvents.find((e: any) => e.slug === slug)
     if (foundEvent) {
@@ -23,7 +35,17 @@ export default function EventManageDashboard() {
     const allRegistrations = JSON.parse(localStorage.getItem("event_registrations") || "[]")
     const eventRegistrations = allRegistrations.filter((r: any) => r.eventSlug === slug)
     setRegistrations(eventRegistrations)
-  }, [slug])
+  }, [slug, router])
+
+  const handleLogout = () => {
+    const authKey = `event_manage_auth_${slug}`
+    localStorage.removeItem(authKey)
+    toast({
+      title: "Logged out",
+      description: "You have been logged out from event management",
+    })
+    router.push(`/event/${slug}/manage/login`)
+  }
 
   if (!event) {
     return <div>Loading...</div>
@@ -31,9 +53,15 @@ export default function EventManageDashboard() {
 
   return (
     <div className="space-y-6">
-      <div>
-        <h1 className="text-3xl font-bold">{event.eventName} - Management</h1>
-        <p className="text-muted-foreground">Manage your event from here</p>
+      <div className="flex justify-between items-start">
+        <div>
+          <h1 className="text-3xl font-bold">{event.eventName} - Management</h1>
+          <p className="text-muted-foreground">Manage your event from here</p>
+        </div>
+        <Button variant="outline" onClick={handleLogout}>
+          <LogOut className="mr-2 h-4 w-4" />
+          Logout
+        </Button>
       </div>
 
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">

@@ -9,12 +9,19 @@ export default function EventManagePage() {
   const slug = params.slug as string
 
   useEffect(() => {
-    router.push(`/event/${slug}/manage/dashboard`)
+    const authKey = `event_manage_auth_${slug}`
+    const isAuthenticated = localStorage.getItem(authKey)
+    
+    if (isAuthenticated === "true") {
+      router.push(`/event/${slug}/manage/dashboard`)
+    } else {
+      router.push(`/event/${slug}/manage/login`)
+    }
   }, [slug, router])
 
   return (
     <div className="min-h-screen flex items-center justify-center">
-      <p>Redirecting to dashboard...</p>
+      <p>Redirecting...</p>
     </div>
   )
 }
