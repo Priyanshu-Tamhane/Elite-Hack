@@ -3,6 +3,7 @@
 import { useState } from "react"
 import Link from "next/link"
 import { useRouter } from "next/navigation"
+import { useAuth } from "@/lib/auth-context"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
@@ -10,22 +11,53 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Checkbox } from "@/components/ui/checkbox"
 import { Mail, Lock, User, ArrowRight, Check } from "lucide-react"
+import { useToast } from "@/hooks/use-toast"
 
 export default function SignupPage() {
   const router = useRouter()
+  const { register } = useAuth()
+  const { toast } = useToast()
   const [role, setRole] = useState<"organizer" | "participant">("organizer")
   const [name, setName] = useState("")
   const [email, setEmail] = useState("")
   const [password, setPassword] = useState("")
   const [agreeTerms, setAgreeTerms] = useState(false)
+  const [loading, setLoading] = useState(false)
 
-  const handleSignup = (e: React.FormEvent) => {
+  const handleSignup = async (e: React.FormEvent) => {
     e.preventDefault()
-    // Simulate signup - redirect based on role
-    if (role === "organizer") {
-      router.push("/dashboard")
-    } else {
-      router.push("/participant/dashboard")
+    
+    if (!agreeTerms) {
+      toast({
+        title: "Error",
+        description: "Please agree to the terms and conditions",
+        variant: "destructive",
+      })
+      return
+    }
+    
+    setLoading(true)
+    
+    try {
+      await register(name, email, password, role)
+      toast({
+        title: "Success",
+        description: "Account created successfully",
+      })
+      
+      if (role === "organizer") {
+        router.push("/dashboard")
+      } else {
+        router.push("/participant/dashboard")
+      }
+    } catch (error: any) {
+      toast({
+        title: "Error",
+        description: error.message || "Failed to create account",
+        variant: "destructive",
+      })
+    } finally {
+      setLoading(false)
     }
   }
 
@@ -148,8 +180,8 @@ export default function SignupPage() {
             </div>
 
             {/* Submit */}
-            <Button type="submit" className="w-full" size="lg" disabled={!agreeTerms}>
-              Create Account
+            <Button type="submit" className="w-full" size="lg" disabled={!agreeTerms || loading}>
+              {loading ? "Creating Account..." : "Create Account"}
               <ArrowRight className="ml-2 h-4 w-4" />
             </Button>
 

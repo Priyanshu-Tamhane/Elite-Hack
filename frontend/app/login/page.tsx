@@ -3,26 +3,48 @@
 import { useState } from "react"
 import Link from "next/link"
 import { useRouter } from "next/navigation"
+import { useAuth } from "@/lib/auth-context"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
+import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Mail, Lock, ArrowRight, Check } from "lucide-react"
+import { useToast } from "@/hooks/use-toast"
 
 export default function LoginPage() {
   const router = useRouter()
+  const { login } = useAuth()
+  const { toast } = useToast()
   const [role, setRole] = useState<"organizer" | "participant">("organizer")
   const [email, setEmail] = useState("")
   const [password, setPassword] = useState("")
+  const [loading, setLoading] = useState(false)
 
-  const handleLogin = (e: React.FormEvent) => {
+  const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault()
-    // Simulate login - redirect based on role
-    if (role === "organizer") {
-      router.push("/dashboard")
-    } else {
-      router.push("/participant/dashboard")
+    setLoading(true)
+    
+    try {
+      await login(email, password, role)
+      toast({
+        title: "Success",
+        description: "Logged in successfully",
+      })
+      
+      if (role === "organizer") {
+        router.push("/dashboard")
+      } else {
+        router.push("/participant/dashboard")
+      }
+    } catch (error: any) {
+      toast({
+        title: "Error",
+        description: error.message || "Invalid credentials",
+        variant: "destructive",
+      })
+    } finally {
+      setLoading(false)
     }
   }
 
@@ -111,8 +133,8 @@ export default function LoginPage() {
             </div>
 
             {/* Submit */}
-            <Button type="submit" className="w-full" size="lg">
-              Sign In
+            <Button type="submit" className="w-full" size="lg" disabled={loading}>
+              {loading ? "Signing In..." : "Sign In"}
               <ArrowRight className="ml-2 h-4 w-4" />
             </Button>
 

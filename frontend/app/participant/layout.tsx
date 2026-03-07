@@ -1,16 +1,21 @@
+"use client"
+
 import { Navbar } from "@/components/navbar"
 import { DashboardSidebar } from "@/components/dashboard-sidebar"
+import { useAuth } from "@/lib/auth-context"
 
 export default function ParticipantLayout({
   children,
 }: {
   children: React.ReactNode
 }) {
+  const { user } = useAuth()
+  
   return (
     <div className="min-h-screen bg-muted/30">
-      <Navbar isLoggedIn={true} userRole="participant" userName="Alex Rivera" />
+      <Navbar isLoggedIn={true} userRole={user?.role || "participant"} userName={user?.name || "User"} />
       <div className="flex">
-        <DashboardSidebar userRole="participant" />
+        <DashboardSidebar userRole={user?.role || "participant"} />
         <div className="flex-1 flex flex-col min-h-[calc(100vh-4rem)] ml-56">
           <main className="flex-1 p-6">
             {children}
