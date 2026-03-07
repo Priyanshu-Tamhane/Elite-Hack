@@ -1,0 +1,117 @@
+"use client"
+
+import { useState, useEffect } from "react"
+import { useParams } from "next/navigation"
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
+import { Users, Calendar, DollarSign, Eye } from "lucide-react"
+import Link from "next/link"
+import { Button } from "@/components/ui/button"
+
+export default function EventManageDashboard() {
+  const params = useParams()
+  const slug = params.slug as string
+  const [event, setEvent] = useState<any>(null)
+  const [registrations, setRegistrations] = useState<any[]>([])
+
+  useEffect(() => {
+    const publishedEvents = JSON.parse(localStorage.getItem("published_events") || "[]")
+    const foundEvent = publishedEvents.find((e: any) => e.slug === slug)
+    if (foundEvent) {
+      setEvent(foundEvent)
+    }
+
+    const allRegistrations = JSON.parse(localStorage.getItem("event_registrations") || "[]")
+    const eventRegistrations = allRegistrations.filter((r: any) => r.eventSlug === slug)
+    setRegistrations(eventRegistrations)
+  }, [slug])
+
+  if (!event) {
+    return <div>Loading...</div>
+  }
+
+  return (
+    <div className="space-y-6">
+      <div>
+        <h1 className="text-3xl font-bold">{event.eventName} - Management</h1>
+        <p className="text-muted-foreground">Manage your event from here</p>
+      </div>
+
+      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">Total Registrations</CardTitle>
+            <Users className="h-4 w-4 text-muted-foreground" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">{registrations.length}</div>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">Event Date</CardTitle>
+            <Calendar className="h-4 w-4 text-muted-foreground" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">{event.startDate}</div>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">Revenue</CardTitle>
+            <DollarSign className="h-4 w-4 text-muted-foreground" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">$0</div>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">Page Views</CardTitle>
+            <Eye className="h-4 w-4 text-muted-foreground" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">-</div>
+          </CardContent>
+        </Card>
+      </div>
+
+      <Card>
+        <CardHeader>
+          <CardTitle>Quick Actions</CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-2">
+          <Button variant="outline" className="w-full justify-start" asChild>
+            <Link href={`/event/${slug}`} target="_blank">View Public Microsite</Link>
+          </Button>
+          <Button variant="outline" className="w-full justify-start">View Registrations</Button>
+          <Button variant="outline" className="w-full justify-start">Send Notifications</Button>
+        </CardContent>
+      </Card>
+
+      <Card>
+        <CardHeader>
+          <CardTitle>Recent Registrations</CardTitle>
+        </CardHeader>
+        <CardContent>
+          {registrations.length === 0 ? (
+            <p className="text-muted-foreground">No registrations yet</p>
+          ) : (
+            <div className="space-y-2">
+              {registrations.slice(0, 5).map((reg, idx) => (
+                <div key={idx} className="flex justify-between items-center p-2 border rounded">
+                  <div>
+                    <p className="font-medium">{reg.name}</p>
+                    <p className="text-sm text-muted-foreground">{reg.email}</p>
+                  </div>
+                  <p className="text-xs text-muted-foreground">
+                    {new Date(reg.registeredAt).toLocaleDateString()}
+                  </p>
+                </div>
+              ))}
+            </div>
+          )}
+        </CardContent>
+      </Card>
+    </div>
+  )
+}
