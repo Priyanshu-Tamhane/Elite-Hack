@@ -8,6 +8,7 @@ import { Label } from "@/components/ui/label"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Lock, ArrowRight } from "lucide-react"
 import { useToast } from "@/hooks/use-toast"
+import { api } from "@/lib/api"
 import Link from "next/link"
 
 export default function EventManageLoginPage() {
@@ -20,7 +21,6 @@ export default function EventManageLoginPage() {
   const [event, setEvent] = useState<any>(null)
 
   useEffect(() => {
-    // Check if already authenticated
     const authKey = `event_manage_auth_${slug}`
     const isAuthenticated = localStorage.getItem(authKey)
     if (isAuthenticated === "true") {
@@ -28,12 +28,18 @@ export default function EventManageLoginPage() {
       return
     }
 
-    // Load event details
-    const publishedEvents = JSON.parse(localStorage.getItem("published_events") || "[]")
-    const foundEvent = publishedEvents.find((e: any) => e.slug === slug)
-    if (foundEvent) {
-      setEvent(foundEvent)
+    const loadEvent = async () => {
+      try {
+        const eventData = await api.getEventBySlug(slug)
+        setEvent(eventData)
+      } catch (error) {
+        const publishedEvents = JSON.parse(localStorage.getItem("published_events") || "[]")
+        const foundEvent = publishedEvents.find((e: any) => e.slug === slug)
+        if (foundEvent) setEvent(foundEvent)
+      }
     }
+    
+    loadEvent()
   }, [slug, router])
 
   const handleLogin = async (e: React.FormEvent) => {
@@ -41,9 +47,11 @@ export default function EventManageLoginPage() {
     setLoading(true)
 
     try {
-      // Simple password check - in production, this should be more secure
-      // For now, we'll use a simple password: "admin123" or the event slug
-      if (password === "admin123" || password === slug) {
+      console.log("Entered password:", password)
+      console.log("Event password:", event?.managementPassword)
+      console.log("Event:", event)
+      
+      if (event?.managementPassword && password.trim() === event.managementPassword.trim()) {
         const authKey = `event_manage_auth_${slug}`
         localStorage.setItem(authKey, "true")
         
@@ -52,11 +60,13 @@ export default function EventManageLoginPage() {
           description: "Access granted to event management",
         })
         
-        router.push(`/event/${slug}/manage/dashboard`)
+        setTimeout(() => {
+          router.push(`/event/${slug}/manage/dashboard`)
+        }, 100)
       } else {
         toast({
           title: "Error",
-          description: "Invalid password",
+          description: `Invalid password. Expected: ${event?.managementPassword || 'Not set'}`,
           variant: "destructive",
         })
       }

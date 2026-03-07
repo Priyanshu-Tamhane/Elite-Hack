@@ -18,6 +18,11 @@ import {
   FileText,
   ArrowRight,
   TrendingUp,
+  UserCheck,
+  Send,
+  Clock,
+  BarChart2,
+  Trophy,
 } from "lucide-react"
 import {
   LineChart,
@@ -208,6 +213,116 @@ export default function OrganizerDashboard() {
                 <Link href="/dashboard/events/create/inventory">
                   Adjust Inventory Limits
                   <ArrowRight className="ml-1 h-4 w-4" />
+                </Link>
+              </Button>
+            </CardContent>
+          </Card>
+        </div>
+      </div>
+
+      {/* Hackathon Management Section */}
+      <div className="space-y-4">
+        <div className="flex items-center gap-3">
+          <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-primary">
+            <Trophy className="h-5 w-5 text-primary-foreground" />
+          </div>
+          <div>
+            <h2 className="text-xl font-bold">Hackathon Management</h2>
+            <p className="text-sm text-muted-foreground">Manage every aspect of your hackathon in one place</p>
+          </div>
+        </div>
+
+        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-5">
+          {/* Registrations */}
+          <Card className="group hover:shadow-md hover:border-primary/40 transition-all duration-200">
+            <CardContent className="flex flex-col gap-3 p-5">
+              <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-blue-100 text-blue-600 dark:bg-blue-900/40 dark:text-blue-400">
+                <UserCheck className="h-5 w-5" />
+              </div>
+              <div>
+                <h3 className="font-semibold">Registrations</h3>
+                <p className="mt-0.5 text-xs text-muted-foreground">View and manage all participant registrations</p>
+              </div>
+              <Button size="sm" variant="outline" className="mt-auto w-full group-hover:bg-primary group-hover:text-primary-foreground transition-colors" asChild>
+                <Link href="/dashboard/hackathon/registrations">
+                  Manage
+                  <ArrowRight className="ml-1 h-3.5 w-3.5" />
+                </Link>
+              </Button>
+            </CardContent>
+          </Card>
+
+          {/* Team Management */}
+          <Card className="group hover:shadow-md hover:border-primary/40 transition-all duration-200">
+            <CardContent className="flex flex-col gap-3 p-5">
+              <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-purple-100 text-purple-600 dark:bg-purple-900/40 dark:text-purple-400">
+                <Users className="h-5 w-5" />
+              </div>
+              <div>
+                <h3 className="font-semibold">Team Management</h3>
+                <p className="mt-0.5 text-xs text-muted-foreground">Oversee teams, members, and group activity</p>
+              </div>
+              <Button size="sm" variant="outline" className="mt-auto w-full group-hover:bg-primary group-hover:text-primary-foreground transition-colors" asChild>
+                <Link href="/dashboard/hackathon/teams">
+                  Manage
+                  <ArrowRight className="ml-1 h-3.5 w-3.5" />
+                </Link>
+              </Button>
+            </CardContent>
+          </Card>
+
+          {/* Submissions */}
+          <Card className="group hover:shadow-md hover:border-primary/40 transition-all duration-200">
+            <CardContent className="flex flex-col gap-3 p-5">
+              <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-green-100 text-green-600 dark:bg-green-900/40 dark:text-green-400">
+                <Send className="h-5 w-5" />
+              </div>
+              <div>
+                <h3 className="font-semibold">Submissions</h3>
+                <p className="mt-0.5 text-xs text-muted-foreground">Review and evaluate hackathon project submissions</p>
+              </div>
+              <Button size="sm" variant="outline" className="mt-auto w-full group-hover:bg-primary group-hover:text-primary-foreground transition-colors" asChild>
+                <Link href="/dashboard/hackathon/submissions">
+                  Manage
+                  <ArrowRight className="ml-1 h-3.5 w-3.5" />
+                </Link>
+              </Button>
+            </CardContent>
+          </Card>
+
+          {/* Schedule */}
+          <Card className="group hover:shadow-md hover:border-primary/40 transition-all duration-200">
+            <CardContent className="flex flex-col gap-3 p-5">
+              <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-orange-100 text-orange-600 dark:bg-orange-900/40 dark:text-orange-400">
+                <Clock className="h-5 w-5" />
+              </div>
+              <div>
+                <h3 className="font-semibold">Schedule</h3>
+                <p className="mt-0.5 text-xs text-muted-foreground">Plan timelines, sessions, and event milestones</p>
+              </div>
+              <Button size="sm" variant="outline" className="mt-auto w-full group-hover:bg-primary group-hover:text-primary-foreground transition-colors" asChild>
+                <Link href="/dashboard/hackathon/schedule">
+                  Manage
+                  <ArrowRight className="ml-1 h-3.5 w-3.5" />
+                </Link>
+              </Button>
+            </CardContent>
+          </Card>
+
+          {/* Analytics */}
+          <Card className="group hover:shadow-md hover:border-primary/40 transition-all duration-200">
+            <CardContent className="flex flex-col gap-3 p-5">
+              <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-rose-100 text-rose-600 dark:bg-rose-900/40 dark:text-rose-400">
+                <BarChart2 className="h-5 w-5" />
+              </div>
+              <div>
+                <h3 className="font-semibold">Analytics</h3>
+                <p className="mt-0.5 text-xs text-muted-foreground">Track performance, trends, and key metrics</p>
+              </div>
+              <Button size="sm" variant="outline" className="mt-auto w-full group-hover:bg-primary group-hover:text-primary-foreground transition-colors" asChild>
+                <Link href="/dashboard/hackathon/analytics">
+                  Manage
+                  <ArrowRight className="ml-1 h-3.5 w-3.5" />
                 </Link>
               </Button>
             </CardContent>

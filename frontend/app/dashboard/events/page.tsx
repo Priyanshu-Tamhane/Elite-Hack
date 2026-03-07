@@ -2,7 +2,6 @@
 
 import { useState, useEffect } from "react"
 import Link from "next/link"
-import Image from "next/image"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
@@ -73,6 +72,11 @@ export default function EventsPage() {
     }
   }
 
+  const copyToClipboard = (text: string) => {
+    navigator.clipboard.writeText(text)
+    toast({ title: "Copied!", description: "Link copied to clipboard" })
+  }
+
   if (loading) return <div>Loading...</div>
   return (
     <div className="space-y-6">
@@ -128,14 +132,19 @@ export default function EventsPage() {
           <p className="col-span-2 text-center text-muted-foreground">No events found. Create your first event!</p>
         ) : (
           events.map((event: any) => (
-          <Card key={event.id} className="overflow-hidden">
+          <Card key={event._id} className="overflow-hidden">
             <div className="relative aspect-video">
-              <Image
-                src={event.image}
-                alt={event.title}
-                fill
-                className="object-cover"
-              />
+              {event.bannerImage ? (
+                <img
+                  src={event.bannerImage}
+                  alt={event.eventName}
+                  className="object-cover w-full h-full"
+                />
+              ) : (
+                <div className="w-full h-full bg-muted flex items-center justify-center">
+                  <Calendar className="h-12 w-12 text-muted-foreground" />
+                </div>
+              )}
               <Badge
                 className="absolute right-3 top-3"
                 variant={
@@ -153,24 +162,24 @@ export default function EventsPage() {
               <div className="flex items-start justify-between">
                 <div className="flex-1">
                   <Link
-                    href={`/dashboard/events/${event.id}`}
+                    href={`/dashboard/events/${event._id}`}
                     className="font-semibold hover:text-primary hover:underline"
                   >
-                    {event.title}
+                    {event.eventName}
                   </Link>
                   <div className="mt-2 space-y-1 text-sm text-muted-foreground">
                     <div className="flex items-center gap-2">
                       <Calendar className="h-4 w-4" />
-                      <span>{new Date(event.date).toLocaleDateString()}</span>
+                      <span>{new Date(event.startDate).toLocaleDateString()}</span>
                     </div>
                     <div className="flex items-center gap-2">
                       <MapPin className="h-4 w-4" />
-                      <span className="line-clamp-1">{event.location}</span>
+                      <span className="line-clamp-1">{event.venue}</span>
                     </div>
                     <div className="flex items-center gap-2">
                       <Users className="h-4 w-4" />
                       <span>
-                        {event.registeredCount} / {event.maxParticipants || 'Unlimited'} registrations
+                        {event.registeredCount || 0} / {event.maxParticipants || 'Unlimited'} registrations
                       </span>
                     </div>
                   </div>
@@ -183,20 +192,20 @@ export default function EventsPage() {
                   </DropdownMenuTrigger>
                   <DropdownMenuContent align="end">
                     <DropdownMenuItem asChild>
-                      <Link href={`/dashboard/events/${event.id}`}>
-                        <Edit className="mr-2 h-4 w-4" />
-                        Edit Event
-                      </Link>
-                    </DropdownMenuItem>
-                    <DropdownMenuItem asChild>
-                      <Link href={`/microsite/${event.id}`} target="_blank">
+                      <Link href={`/event/${event.slug}`} target="_blank">
                         <ExternalLink className="mr-2 h-4 w-4" />
                         View Microsite
                       </Link>
                     </DropdownMenuItem>
-                    <DropdownMenuItem>
+                    <DropdownMenuItem asChild>
+                      <Link href={`/event/${event.slug}/manage`}>
+                        <Edit className="mr-2 h-4 w-4" />
+                        Manage Event
+                      </Link>
+                    </DropdownMenuItem>
+                    <DropdownMenuItem onClick={() => copyToClipboard(`${window.location.origin}/event/${event.slug}`)}>
                       <Copy className="mr-2 h-4 w-4" />
-                      Duplicate
+                      Copy Link
                     </DropdownMenuItem>
                     <DropdownMenuItem className="text-destructive" onClick={() => handleDelete(event._id)}>
                       <Trash2 className="mr-2 h-4 w-4" />
@@ -210,7 +219,7 @@ export default function EventsPage() {
                   Category: <span className="font-medium text-foreground">{event.category}</span>
                 </span>
                 <Button variant="outline" size="sm" asChild>
-                  <Link href={`/dashboard/events/${event.id}`}>
+                  <Link href={`/event/${event.slug}/manage`}>
                     Manage
                   </Link>
                 </Button>

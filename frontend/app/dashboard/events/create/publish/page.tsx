@@ -8,6 +8,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { StepProgress } from "@/components/step-progress"
 import { CheckCircle, ExternalLink, Copy, Rocket } from "lucide-react"
 import { useToast } from "@/hooks/use-toast"
+import { api } from "@/lib/api"
 
 const steps = [
   { label: "Event Details", href: "/dashboard/events/create/details" },
@@ -33,6 +34,8 @@ export default function PublishEventPage() {
   const [eventName, setEventName] = useState("")
   const [publicUrl, setPublicUrl] = useState("")
   const [manageUrl, setManageUrl] = useState("")
+  const [category, setCategory] = useState("")
+  const [managementPassword, setManagementPassword] = useState("")
 
   useEffect(() => {
     const savedData = localStorage.getItem("event_draft_details")
@@ -42,39 +45,95 @@ export default function PublishEventPage() {
         const slug = generateSlug(data.eventName || "my-event")
         setEventSlug(slug)
         setEventName(data.eventName || "My Event")
+        setCategory(data.category || "")
         setPublicUrl(`${window.location.origin}/event/${slug}`)
         setManageUrl(`${window.location.origin}/event/${slug}/manage`)
+        
+        const publishedEvents = JSON.parse(localStorage.getItem("published_events") || "[]")
+        const published = publishedEvents.find((e: any) => e.slug === slug)
+        if (published?.managementPassword) {
+          setManagementPassword(published.managementPassword)
+        }
       } catch (error) {
         console.error("Failed to load event data", error)
       }
     }
   }, [])
 
-  const handlePublish = () => {
+  const handlePublish = async () => {
     const savedData = localStorage.getItem("event_draft_details")
     if (savedData) {
       try {
         const data = JSON.parse(savedData)
         const slug = generateSlug(data.eventName || "my-event")
-        
-        // Save published event to localStorage
+        const managementPassword = Math.random().toString(36).slice(-8).toUpperCase()
+
+        // Merge hackathon inventory data if category is hackathon
+        let hackathonData = {}
+        if ((data.category || "").toLowerCase() === "hackathon") {
+          const inventoryDraft = localStorage.getItem("hackathon_inventory_draft")
+          if (inventoryDraft) {
+            try {
+              hackathonData = JSON.parse(inventoryDraft)
+            } catch (_) {}
+          }
+        }
+
         const publishedEvent = {
           ...data,
+          ...hackathonData,   // ← prizes, sponsors, schedule, tracks, capacity etc.
           slug,
+          managementPassword,
           id: `evt_${Date.now()}`,
           publishedAt: new Date().toISOString(),
           status: "published"
         }
-        
-        // Store in published events list
+
         const publishedEvents = JSON.parse(localStorage.getItem("published_events") || "[]")
-        publishedEvents.push(publishedEvent)
+        // Replace if slug already exists, otherwise push
+        const existingIdx = publishedEvents.findIndex((e: any) => e.slug === slug)
+        if (existingIdx >= 0) {
+          publishedEvents[existingIdx] = publishedEvent
+        } else {
+          publishedEvents.push(publishedEvent)
+        }
         localStorage.setItem("published_events", JSON.stringify(publishedEvents))
-        
+
+        try {
+          const response = await api.createEvent({
+            eventName: data.eventName,
+            title: data.eventName,
+            description: data.description,
+            startDate: data.startDate,
+            endDate: data.endDate,
+            startTime: data.startTime,
+            venue: data.venue,
+            category: data.category,
+            bannerImage: data.bannerImage,
+            managementPassword: managementPassword,
+            slug: slug,
+            status: "published",
+            ...hackathonData,
+          })
+          console.log("Event saved to MongoDB:", response)
+          toast({
+            title: "Saved to Database",
+            description: "Event successfully saved to MongoDB",
+          })
+        } catch (apiError: any) {
+          console.error("Failed to save to database:", apiError)
+          toast({
+            title: "Database Error",
+            description: apiError.message || "Failed to save to MongoDB. Check console.",
+            variant: "destructive",
+          })
+        }
+
         setIsPublished(true)
+        setManagementPassword(managementPassword)
         toast({
           title: "Event Published!",
-          description: "Your event microsite is now live.",
+          description: `Management Password: ${managementPassword}`,
         })
       } catch (error) {
         toast({
@@ -113,6 +172,31 @@ export default function PublishEventPage() {
                 <p className="text-sm text-muted-foreground">is now live!</p>
               </div>
             </div>
+            {category === "hackathon" && (
+              <div className="mt-4 p-3 bg-white rounded-lg border border-green-300">
+                <p className="text-sm text-green-800">
+                  <strong>Two links generated:</strong> Share the Participant Microsite with attendees, and use the Manager Dashboard to track teams and manage the hackathon.
+                </p>
+              </div>
+            )}
+            {managementPassword && (
+              <div className="mt-4 p-4 bg-yellow-50 rounded-lg border border-yellow-300">
+                <p className="text-sm font-semibold text-yellow-900 mb-2">Management Password:</p>
+                <div className="flex items-center gap-2">
+                  <code className="flex-1 text-lg font-mono bg-white px-3 py-2 rounded border border-yellow-200">
+                    {managementPassword}
+                  </code>
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    onClick={() => copyToClipboard(managementPassword)}
+                  >
+                    <Copy className="h-4 w-4" />
+                  </Button>
+                </div>
+                <p className="text-xs text-yellow-700 mt-2">Save this password - you'll need it to access the management dashboard</p>
+              </div>
+            )}
           </CardContent>
         </Card>
 
@@ -121,7 +205,7 @@ export default function PublishEventPage() {
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
                 <ExternalLink className="h-5 w-5" />
-                Public Microsite
+                {category === "hackathon" ? "Participant Microsite" : "Public Microsite"}
               </CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
@@ -151,7 +235,7 @@ export default function PublishEventPage() {
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
                 <Rocket className="h-5 w-5" />
-                Management Panel
+                {category === "hackathon" ? "Manager Dashboard" : "Management Panel"}
               </CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
@@ -170,7 +254,7 @@ export default function PublishEventPage() {
                 <Button asChild className="flex-1">
                   <Link href={`/event/${eventSlug}/manage`}>
                     <ExternalLink className="h-4 w-4 mr-2" />
-                    Manage Event
+                    {category === "hackathon" ? "Open Dashboard" : "Manage Event"}
                   </Link>
                 </Button>
               </div>
@@ -227,6 +311,12 @@ export default function PublishEventPage() {
               <CheckCircle className="h-5 w-5 text-green-600 mt-0.5" />
               <span>Your event microsite will be generated instantly</span>
             </li>
+            {category === "hackathon" && (
+              <li className="flex items-start gap-2">
+                <CheckCircle className="h-5 w-5 text-green-600 mt-0.5" />
+                <span>Two separate links: Participant Microsite + Manager Dashboard</span>
+              </li>
+            )}
             <li className="flex items-start gap-2">
               <CheckCircle className="h-5 w-5 text-green-600 mt-0.5" />
               <span>Participants can register/RSVP through the microsite</span>

@@ -5,6 +5,7 @@ import { useParams } from "next/navigation"
 import { HackathonMicrosite } from "@/components/microsites/HackathonMicrosite"
 import { WeddingMicrosite } from "@/components/microsites/WeddingMicrosite"
 import { DefaultMicrosite } from "@/components/microsites/DefaultMicrosite"
+import { api } from "@/lib/api"
 
 export default function EventMicrositePage() {
   const params = useParams()
@@ -13,14 +14,19 @@ export default function EventMicrositePage() {
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
-    // Load event from localStorage
-    const publishedEvents = JSON.parse(localStorage.getItem("published_events") || "[]")
-    const foundEvent = publishedEvents.find((e: any) => e.slug === slug)
-    
-    if (foundEvent) {
-      setEvent(foundEvent)
+    const loadEvent = async () => {
+      try {
+        const eventData = await api.getEventBySlug(slug)
+        setEvent(eventData)
+      } catch (error) {
+        const publishedEvents = JSON.parse(localStorage.getItem("published_events") || "[]")
+        const foundEvent = publishedEvents.find((e: any) => e.slug === slug)
+        if (foundEvent) setEvent(foundEvent)
+      }
+      setLoading(false)
     }
-    setLoading(false)
+    
+    loadEvent()
   }, [slug])
 
   if (loading) {

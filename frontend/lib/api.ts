@@ -72,6 +72,17 @@ class ApiService {
     });
   }
 
+  async getEventBySlug(slug: string) {
+    return this.request(`/events/slug/${slug}`);
+  }
+
+  async registerParticipant(slug: string, participantData: any) {
+    return this.request(`/events/${slug}/register`, {
+      method: 'POST',
+      body: JSON.stringify(participantData),
+    });
+  }
+
   // Teams
   async getTeamsByEvent(eventId: string) {
     return this.request(`/teams/event/${eventId}`);
