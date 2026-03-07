@@ -9,10 +9,9 @@ export default function EventManagePage() {
   const slug = params.slug as string
 
   useEffect(() => {
-    const authKey = `event_manage_auth_${slug}`
-    const isAuthenticated = localStorage.getItem(authKey)
+    const authKey = sessionStorage.getItem("event_admin")
     
-    if (isAuthenticated === "true") {
+    if (authKey === slug) {
       router.push(`/event/${slug}/manage/dashboard`)
     } else {
       router.push(`/event/${slug}/manage/login`)

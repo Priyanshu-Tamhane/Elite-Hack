@@ -9,6 +9,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { useToast } from "@/hooks/use-toast"
 import { ArrowLeft, CheckCircle } from "lucide-react"
 import Link from "next/link"
+import { api } from "@/lib/api"
 
 export default function RegisterPage() {
   const params = useParams()
@@ -20,36 +21,47 @@ export default function RegisterPage() {
   const [email, setEmail] = useState("")
   const [phone, setPhone] = useState("")
   const [isSubmitted, setIsSubmitted] = useState(false)
+  const [isSubmitting, setIsSubmitting] = useState(false)
 
   useEffect(() => {
-    const publishedEvents = JSON.parse(localStorage.getItem("published_events") || "[]")
-    const foundEvent = publishedEvents.find((e: any) => e.slug === slug)
-    if (foundEvent) {
-      setEvent(foundEvent)
+    const loadEvent = async () => {
+      try {
+        const data = await api.getEventBySlug(slug)
+        setEvent(data)
+      } catch (error) {
+        console.error("Failed to load event", error)
+      }
     }
+    loadEvent()
   }, [slug])
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
+    setIsSubmitting(true)
     
-    const registration = {
-      eventSlug: slug,
-      name,
-      email,
-      phone,
-      registeredAt: new Date().toISOString()
+    try {
+      await api.createRegistration(slug, {
+        name,
+        email,
+        phone,
+        guestsCount: 1,
+        status: "pending"
+      })
+
+      setIsSubmitted(true)
+      toast({
+        title: "Registration Successful!",
+        description: "You've been registered for the event.",
+      })
+    } catch (error: any) {
+      toast({
+        title: "Error",
+        description: error.message || "Failed to register. Please try again.",
+        variant: "destructive",
+      })
+    } finally {
+      setIsSubmitting(false)
     }
-
-    // Save registration
-    const registrations = JSON.parse(localStorage.getItem("event_registrations") || "[]")
-    registrations.push(registration)
-    localStorage.setItem("event_registrations", JSON.stringify(registrations))
-
-    setIsSubmitted(true)
-    toast({
-      title: "Registration Successful!",
-      description: "You've been registered for the event.",
-    })
   }
 
   if (!event) {
@@ -121,8 +133,8 @@ export default function RegisterPage() {
                   required
                 />
               </div>
-              <Button type="submit" className="w-full" size="lg">
-                Complete Registration
+              <Button type="submit" className="w-full" size="lg" disabled={isSubmitting}>
+                {isSubmitting ? "Registering..." : "Complete Registration"}
               </Button>
             </form>
           </CardContent>

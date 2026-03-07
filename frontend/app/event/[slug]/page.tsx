@@ -5,6 +5,7 @@ import { useParams } from "next/navigation"
 import { HackathonMicrosite } from "@/components/microsites/HackathonMicrosite"
 import { WeddingMicrosite } from "@/components/microsites/WeddingMicrosite"
 import { DefaultMicrosite } from "@/components/microsites/DefaultMicrosite"
+import { api } from "@/lib/api"
 
 export default function EventMicrositePage() {
   const params = useParams()
@@ -13,14 +14,17 @@ export default function EventMicrositePage() {
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
-    // Load event from localStorage
-    const publishedEvents = JSON.parse(localStorage.getItem("published_events") || "[]")
-    const foundEvent = publishedEvents.find((e: any) => e.slug === slug)
-    
-    if (foundEvent) {
-      setEvent(foundEvent)
+    const loadEvent = async () => {
+      try {
+        const data = await api.getEventBySlug(slug)
+        setEvent(data)
+      } catch (error) {
+        console.error("Failed to load event", error)
+      } finally {
+        setLoading(false)
+      }
     }
-    setLoading(false)
+    loadEvent()
   }, [slug])
 
   if (loading) {
@@ -42,7 +46,6 @@ export default function EventMicrositePage() {
     )
   }
 
-  // Render appropriate microsite based on category
   if (event.category === "hackathon") {
     return <HackathonMicrosite event={event} />
   }
@@ -51,6 +54,5 @@ export default function EventMicrositePage() {
     return <WeddingMicrosite event={event} />
   }
 
-  // Default microsite for other categories
   return <DefaultMicrosite event={event} />
 }

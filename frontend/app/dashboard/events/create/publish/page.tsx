@@ -6,8 +6,9 @@ import { useRouter } from "next/navigation"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { StepProgress } from "@/components/step-progress"
-import { CheckCircle, ExternalLink, Copy, Rocket } from "lucide-react"
+import { CheckCircle, ExternalLink, Copy, Rocket, Lock } from "lucide-react"
 import { useToast } from "@/hooks/use-toast"
+import { api } from "@/lib/api"
 
 const steps = [
   { label: "Event Details", href: "/dashboard/events/create/details" },
@@ -25,6 +26,15 @@ function generateSlug(name: string): string {
     .trim()
 }
 
+function generatePassword(): string {
+  const chars = 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789'
+  let password = ''
+  for (let i = 0; i < 10; i++) {
+    password += chars.charAt(Math.floor(Math.random() * chars.length))
+  }
+  return password
+}
+
 export default function PublishEventPage() {
   const router = useRouter()
   const { toast } = useToast()
@@ -33,6 +43,8 @@ export default function PublishEventPage() {
   const [eventName, setEventName] = useState("")
   const [publicUrl, setPublicUrl] = useState("")
   const [manageUrl, setManageUrl] = useState("")
+  const [managementPassword, setManagementPassword] = useState("")
+  const [isPublishing, setIsPublishing] = useState(false)
 
   useEffect(() => {
     const savedData = localStorage.getItem("event_draft_details")
@@ -50,38 +62,73 @@ export default function PublishEventPage() {
     }
   }, [])
 
-  const handlePublish = () => {
+  const handlePublish = async () => {
     const savedData = localStorage.getItem("event_draft_details")
+    const inventoryData = localStorage.getItem("event_draft_inventory")
+    
     if (savedData) {
+      setIsPublishing(true)
       try {
         const data = JSON.parse(savedData)
+        const inventory = inventoryData ? JSON.parse(inventoryData) : {}
         const slug = generateSlug(data.eventName || "my-event")
+        const password = generatePassword()
         
-        // Save published event to localStorage
         const publishedEvent = {
-          ...data,
+          eventName: data.eventName,
+          description: data.description,
+          category: data.category,
+          startDate: data.startDate,
+          endDate: data.endDate,
+          startTime: data.startTime,
+          venue: data.venue,
+          bannerUrl: data.bannerUrl,
           slug,
-          id: `evt_${Date.now()}`,
-          publishedAt: new Date().toISOString(),
-          status: "published"
+          status: "published",
+          adminPassword: password,
+          inventory: {
+            maxParticipants: inventory.maxParticipants,
+            teamSize: inventory.teamSize,
+            twinRooms: inventory.twinRooms,
+            suites: inventory.suites,
+            bunkBeds: inventory.bunkBeds
+          },
+          rsvp_settings: {
+            enabled: true,
+            plus_one: true,
+            max_guests: 5,
+            meal_preference: true
+          },
+          media: { hero_image: "", gallery: [] },
+          schedule: [],
+          accommodation: {
+            hotel_name: "",
+            twin_rooms: inventory.twinRooms || 0,
+            suites: inventory.suites || 0,
+            bunk_beds: inventory.bunkBeds || 0
+          },
+          contact: { name: "", phone: "", email: "" }
         }
         
-        // Store in published events list
-        const publishedEvents = JSON.parse(localStorage.getItem("published_events") || "[]")
-        publishedEvents.push(publishedEvent)
-        localStorage.setItem("published_events", JSON.stringify(publishedEvents))
+        await api.createEvent(publishedEvent)
         
+        localStorage.removeItem("event_draft_details")
+        localStorage.removeItem("event_draft_inventory")
+        
+        setManagementPassword(password)
         setIsPublished(true)
         toast({
           title: "Event Published!",
           description: "Your event microsite is now live.",
         })
-      } catch (error) {
+      } catch (error: any) {
         toast({
           title: "Error",
-          description: "Failed to publish event. Please try again.",
+          description: error.message || "Failed to publish event. Please try again.",
           variant: "destructive",
         })
+      } finally {
+        setIsPublishing(false)
       }
     }
   }
@@ -113,6 +160,31 @@ export default function PublishEventPage() {
                 <p className="text-sm text-muted-foreground">is now live!</p>
               </div>
             </div>
+          </CardContent>
+        </Card>
+
+        <Card className="border-amber-200 bg-amber-50">
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <Lock className="h-5 w-5" />
+              Management Password
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <p className="text-sm text-muted-foreground">
+              Use this password to access the management panel
+            </p>
+            <div className="p-3 bg-white rounded-lg font-mono text-lg font-bold text-center">
+              {managementPassword}
+            </div>
+            <Button
+              variant="outline"
+              className="w-full"
+              onClick={() => copyToClipboard(managementPassword)}
+            >
+              <Copy className="h-4 w-4 mr-2" />
+              Copy Password
+            </Button>
           </CardContent>
         </Card>
 
@@ -247,9 +319,9 @@ export default function PublishEventPage() {
         <Button variant="ghost" asChild>
           <Link href="/dashboard/events/create/payments">Back to Payments</Link>
         </Button>
-        <Button onClick={handlePublish} size="lg">
+        <Button onClick={handlePublish} size="lg" disabled={isPublishing}>
           <Rocket className="mr-2 h-5 w-5" />
-          Publish Event
+          {isPublishing ? "Publishing..." : "Publish Event"}
         </Button>
       </div>
     </div>

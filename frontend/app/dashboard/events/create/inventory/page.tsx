@@ -11,6 +11,7 @@ import { Progress } from "@/components/ui/progress"
 import { Badge } from "@/components/ui/badge"
 import { StepProgress } from "@/components/step-progress"
 import { useEventCreation } from "@/lib/event-creation-context"
+import { WeddingInventory } from "@/components/inventory/WeddingInventory"
 import {
   Table,
   TableBody,
@@ -65,14 +66,26 @@ export default function CreateEventInventoryPage() {
     breakout: "45",
     mentorship: "15",
   })
+  const [weddingData, setWeddingData] = useState<any>({})
 
   // Category-based visibility
   const showTeamSettings = ['hackathon', 'workshop'].includes(category)
   const showTicketManagement = !['hackathon', 'wedding', 'corporate event', 'festival'].includes(category)
   const showWorkshopCapacity = ['conference', 'workshop', 'corporate event'].includes(category)
-  const showAccommodation = ['hackathon', 'conference', 'wedding', 'corporate event', 'festival'].includes(category)
+  const showAccommodation = ['hackathon', 'conference', 'corporate event', 'festival'].includes(category)
+  const isWedding = category === 'wedding'
 
   const handleNext = () => {
+    // Save inventory data to localStorage
+    const inventoryData = isWedding ? weddingData : {
+      totalCapacity,
+      maxTeamSize,
+      minTeamSize,
+      waitlistCapacity,
+      ticketTiers,
+      workshopCapacity
+    }
+    localStorage.setItem('event_draft_inventory', JSON.stringify(inventoryData))
     router.push("/dashboard/events/create/payments")
   }
 
@@ -99,7 +112,50 @@ export default function CreateEventInventoryPage() {
 
       {/* Form */}
       <div className="space-y-6">
-        {/* Global Capacity & Team Rules */}
+        {/* Wedding-specific inventory */}
+        {isWedding ? (
+          <>
+            {/* Global Capacity for Wedding */}
+            <Card>
+              <CardHeader>
+                <div className="flex items-center gap-2">
+                  <Users className="h-5 w-5 text-primary" />
+                  <CardTitle>Global Capacity</CardTitle>
+                </div>
+                <p className="text-sm text-muted-foreground">
+                  Set the overall guest capacity for your wedding
+                </p>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div className="grid gap-4 md:grid-cols-2">
+                  <div className="space-y-2">
+                    <Label htmlFor="capacity">Total Guest Capacity</Label>
+                    <Input
+                      id="capacity"
+                      type="number"
+                      value={totalCapacity}
+                      onChange={(e) => setTotalCapacity(e.target.value)}
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="waitlist">Waitlist Capacity</Label>
+                    <Input
+                      id="waitlist"
+                      type="number"
+                      value={waitlistCapacity}
+                      onChange={(e) => setWaitlistCapacity(e.target.value)}
+                    />
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+            
+            {/* Wedding-specific sections */}
+            <WeddingInventory onDataChange={setWeddingData} />
+          </>
+        ) : (
+          <>
+            {/* Default inventory for other categories */}
         <Card>
           <CardHeader>
             <div className="flex items-center gap-2">
@@ -318,6 +374,8 @@ export default function CreateEventInventoryPage() {
             </Card>
           )}
         </div>
+        </>
+        )}
       </div>
 
       {/* Footer Actions */}

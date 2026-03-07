@@ -9,6 +9,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Lock, ArrowRight } from "lucide-react"
 import { useToast } from "@/hooks/use-toast"
 import Link from "next/link"
+import { api } from "@/lib/api"
 
 export default function EventManageLoginPage() {
   const params = useParams()
@@ -20,20 +21,21 @@ export default function EventManageLoginPage() {
   const [event, setEvent] = useState<any>(null)
 
   useEffect(() => {
-    // Check if already authenticated
-    const authKey = `event_manage_auth_${slug}`
-    const isAuthenticated = localStorage.getItem(authKey)
-    if (isAuthenticated === "true") {
+    const authKey = sessionStorage.getItem("event_admin")
+    if (authKey === slug) {
       router.push(`/event/${slug}/manage/dashboard`)
       return
     }
 
-    // Load event details
-    const publishedEvents = JSON.parse(localStorage.getItem("published_events") || "[]")
-    const foundEvent = publishedEvents.find((e: any) => e.slug === slug)
-    if (foundEvent) {
-      setEvent(foundEvent)
+    const loadEvent = async () => {
+      try {
+        const data = await api.getEventBySlug(slug)
+        setEvent(data)
+      } catch (error) {
+        console.error("Failed to load event", error)
+      }
     }
+    loadEvent()
   }, [slug, router])
 
   const handleLogin = async (e: React.FormEvent) => {
@@ -41,11 +43,8 @@ export default function EventManageLoginPage() {
     setLoading(true)
 
     try {
-      // Simple password check - in production, this should be more secure
-      // For now, we'll use a simple password: "admin123" or the event slug
-      if (password === "admin123" || password === slug) {
-        const authKey = `event_manage_auth_${slug}`
-        localStorage.setItem(authKey, "true")
+      if (event.adminPassword && password === event.adminPassword) {
+        sessionStorage.setItem("event_admin", slug)
         
         toast({
           title: "Success",
@@ -81,7 +80,6 @@ export default function EventManageLoginPage() {
 
   return (
     <div className="flex min-h-screen flex-col items-center justify-center bg-gradient-to-br from-muted via-background to-muted p-4">
-      {/* Logo */}
       <Link href="/" className="mb-8 flex items-center gap-2">
         <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-primary">
           <svg
@@ -97,7 +95,6 @@ export default function EventManageLoginPage() {
         <span className="text-2xl font-bold text-primary">EventSphere</span>
       </Link>
 
-      {/* Card */}
       <Card className="w-full max-w-md">
         <CardHeader className="text-center">
           <CardTitle className="text-2xl">Event Management Access</CardTitle>
@@ -107,7 +104,6 @@ export default function EventManageLoginPage() {
         </CardHeader>
         <CardContent>
           <form onSubmit={handleLogin} className="space-y-6">
-            {/* Password */}
             <div className="space-y-2">
               <Label htmlFor="password">Management Password</Label>
               <div className="relative">
@@ -127,13 +123,11 @@ export default function EventManageLoginPage() {
               </p>
             </div>
 
-            {/* Submit */}
             <Button type="submit" className="w-full" size="lg" disabled={loading}>
               {loading ? "Verifying..." : "Access Management Panel"}
               <ArrowRight className="ml-2 h-4 w-4" />
             </Button>
 
-            {/* Back Link */}
             <div className="text-center">
               <Link 
                 href={`/event/${slug}`} 
@@ -146,7 +140,6 @@ export default function EventManageLoginPage() {
         </CardContent>
       </Card>
 
-      {/* Help Text */}
       <p className="mt-6 max-w-sm text-center text-xs text-muted-foreground">
         If you've forgotten your password, please contact the event organizer or use the main dashboard.
       </p>
