@@ -17,6 +17,7 @@ import {
 } from "@/components/ui/select"
 import { StepProgress } from "@/components/step-progress"
 import { useToast } from "@/hooks/use-toast"
+import { useEventCreation } from "@/lib/event-creation-context"
 import {
   Type,
   Tag,
@@ -42,7 +43,6 @@ const categories = [
   "Hackathon",
   "Conference",
   "Workshop",
-  "Meetup",
   "Wedding",
   "Corporate Event",
   "Festival",
@@ -54,6 +54,7 @@ const STORAGE_KEY = "event_draft_details"
 export default function CreateEventDetailsPage() {
   const router = useRouter()
   const { toast } = useToast()
+  const { eventData, updateEventData } = useEventCreation()
   const [isLoaded, setIsLoaded] = useState(false)
   const [eventName, setEventName] = useState("")
   const [category, setCategory] = useState("")
@@ -156,6 +157,7 @@ export default function CreateEventDetailsPage() {
       bannerImage,
     }
     localStorage.setItem(STORAGE_KEY, JSON.stringify(formData))
+    updateEventData({ eventName, category, description, startDate, endDate, startTime, venue })
     router.push("/dashboard/events/create/inventory")
   }
 
