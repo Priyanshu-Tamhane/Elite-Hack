@@ -76,7 +76,7 @@ export default function PublishEventPage() {
         
         const publishedEvent = {
           eventName: data.eventName,
-          description: data.description,
+          description: data.description || "No description provided",
           category: data.category,
           startDate: data.startDate,
           endDate: data.endDate,
