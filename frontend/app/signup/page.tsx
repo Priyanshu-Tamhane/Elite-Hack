@@ -27,15 +27,6 @@ export default function SignupPage() {
   const handleSignup = async (e: React.FormEvent) => {
     e.preventDefault()
     
-    if (!agreeTerms) {
-      toast({
-        title: "Error",
-        description: "Please agree to the terms and conditions",
-        variant: "destructive",
-      })
-      return
-    }
-    
     setLoading(true)
     
     try {
@@ -160,27 +151,8 @@ export default function SignupPage() {
               </p>
             </div>
 
-            {/* Terms Checkbox */}
-            <div className="flex items-start space-x-2">
-              <Checkbox
-                id="terms"
-                checked={agreeTerms}
-                onCheckedChange={(checked) => setAgreeTerms(checked as boolean)}
-              />
-              <Label htmlFor="terms" className="text-sm leading-tight text-muted-foreground">
-                I agree to the{" "}
-                <Link href="/terms" className="text-primary hover:underline">
-                  Terms of Service
-                </Link>{" "}
-                and{" "}
-                <Link href="/privacy" className="text-primary hover:underline">
-                  Privacy Policy
-                </Link>
-              </Label>
-            </div>
-
             {/* Submit */}
-            <Button type="submit" className="w-full" size="lg" disabled={!agreeTerms || loading}>
+            <Button type="submit" className="w-full" size="lg" disabled={loading}>
               {loading ? "Creating Account..." : "Create Account"}
               <ArrowRight className="ml-2 h-4 w-4" />
             </Button>

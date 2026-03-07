@@ -1,10 +1,13 @@
 "use client"
 
+import { useState, useEffect } from "react"
 import Link from "next/link"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { StatsCard } from "@/components/stats-card"
+import { api } from "@/lib/api"
+import { useAuth } from "@/lib/auth-context"
 import {
   Calendar,
   Users,
@@ -36,42 +39,27 @@ const chartData = [
   { name: "30 May", registrations: 320 },
 ]
 
-const recentActivity = [
-  {
-    id: 1,
-    user: "Sarah Johnson",
-    action: "registered for",
-    event: "Global Tech Summit 2024",
-    time: "2 minutes ago",
-    avatar: "/placeholder.svg?height=32&width=32",
-  },
-  {
-    id: 2,
-    user: "Michael Chen",
-    action: "purchased a VIP ticket for",
-    event: "City Jazz Festival",
-    time: "15 minutes ago",
-    avatar: "/placeholder.svg?height=32&width=32",
-  },
-  {
-    id: 3,
-    user: "Emma Wilson",
-    action: "requested accommodation for",
-    event: "Developer Hackathon",
-    time: "1 hour ago",
-    avatar: "/placeholder.svg?height=32&width=32",
-  },
-  {
-    id: 4,
-    user: "David Miller",
-    action: "joined team 'CodeWarriors' in",
-    event: "Developer Hackathon",
-    time: "3 hours ago",
-    avatar: "/placeholder.svg?height=32&width=32",
-  },
-]
-
 export default function OrganizerDashboard() {
+  const { user } = useAuth()
+  const [events, setEvents] = useState([])
+  const [stats, setStats] = useState({ total: 0, registrations: 0, slots: 0 })
+
+  useEffect(() => {
+    loadData()
+  }, [])
+
+  const loadData = async () => {
+    try {
+      const data = await api.getEvents()
+      setEvents(data)
+      const total = data.length
+      const registrations = data.reduce((sum: number, e: any) => sum + (e.registeredCount || 0), 0)
+      const slots = data.reduce((sum: number, e: any) => sum + (e.maxParticipants || 0), 0) - registrations
+      setStats({ total, registrations, slots })
+    } catch (error) {
+      console.error(error)
+    }
+  }
   return (
     <div className="space-y-6">
       {/* Header */}
@@ -79,7 +67,7 @@ export default function OrganizerDashboard() {
         <div>
           <h1 className="text-3xl font-bold">Organizer Dashboard</h1>
           <p className="text-muted-foreground">
-            Welcome back, Alex. Here&apos;s what&apos;s happening with your events today.
+            Welcome back, {user?.name}. Here&apos;s what&apos;s happening with your events today.
           </p>
         </div>
         <div className="flex gap-3">
@@ -102,25 +90,22 @@ export default function OrganizerDashboard() {
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
         <StatsCard
           title="Total Events"
-          value="12"
+          value={stats.total.toString()}
           icon={Calendar}
-          trend={{ value: "+2 this month", direction: "up" }}
         />
         <StatsCard
           title="Registrations"
-          value="2,840"
+          value={stats.registrations.toString()}
           icon={Users}
-          trend={{ value: "+18% vs last week", direction: "up" }}
         />
         <StatsCard
           title="Revenue"
-          value="$45,210"
+          value="$0"
           icon={DollarSign}
-          trend={{ value: "+$8k since Monday", direction: "up" }}
         />
         <StatsCard
           title="Available Slots"
-          value="452"
+          value={stats.slots.toString()}
           icon={Ticket}
         />
       </div>
@@ -229,58 +214,6 @@ export default function OrganizerDashboard() {
           </Card>
         </div>
       </div>
-
-      {/* Recent Activity */}
-      <Card>
-        <CardHeader className="flex flex-row items-center justify-between">
-          <div>
-            <CardTitle>Recent Activity</CardTitle>
-            <p className="text-sm text-muted-foreground">
-              Live updates from your event ecosystem
-            </p>
-          </div>
-          <p className="text-sm text-muted-foreground">Last updated: 1m ago</p>
-        </CardHeader>
-        <CardContent>
-          <div className="space-y-4">
-            {recentActivity.map((activity) => (
-              <div
-                key={activity.id}
-                className="flex items-center justify-between rounded-lg p-3 transition-colors hover:bg-muted/50"
-              >
-                <div className="flex items-center gap-4">
-                  <Avatar className="h-10 w-10">
-                    <AvatarImage src={activity.avatar} alt={activity.user} />
-                    <AvatarFallback>
-                      {activity.user.split(" ").map((n) => n[0]).join("")}
-                    </AvatarFallback>
-                  </Avatar>
-                  <div>
-                    <p className="text-sm">
-                      <span className="font-medium">{activity.user}</span>{" "}
-                      {activity.action}{" "}
-                      <Link
-                        href="/dashboard/events/1"
-                        className="font-medium text-primary hover:underline"
-                      >
-                        {activity.event}
-                      </Link>
-                    </p>
-                    <p className="text-xs text-muted-foreground">{activity.time}</p>
-                  </div>
-                </div>
-                <ArrowRight className="h-4 w-4 text-muted-foreground" />
-              </div>
-            ))}
-          </div>
-          <Button variant="ghost" className="mt-4 w-full" asChild>
-            <Link href="/dashboard/activity">
-              Load More Activity
-              <ArrowRight className="ml-2 h-4 w-4" />
-            </Link>
-          </Button>
-        </CardContent>
-      </Card>
     </div>
   )
 }

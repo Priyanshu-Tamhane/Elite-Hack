@@ -1,11 +1,14 @@
 "use client"
 
+import { useState, useEffect } from "react"
 import Link from "next/link"
 import Image from "next/image"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Input } from "@/components/ui/input"
+import { api } from "@/lib/api"
+import { useToast } from "@/hooks/use-toast"
 import {
   Select,
   SelectContent,
@@ -32,54 +35,45 @@ import {
   Trash2,
 } from "lucide-react"
 
-const events = [
-  {
-    id: "1",
-    title: "Global Tech Innovators Summit 2024",
-    image: "/placeholder.svg?height=200&width=400",
-    date: "Oct 24, 2024",
-    location: "San Francisco Convention Center",
-    registrations: 1248,
-    capacity: 1500,
-    status: "active",
-    revenue: "$45,290",
-  },
-  {
-    id: "2",
-    title: "Developer Hackathon 2024",
-    image: "/placeholder.svg?height=200&width=400",
-    date: "Nov 15-17, 2024",
-    location: "Innovation Hub, SF",
-    registrations: 342,
-    capacity: 500,
-    status: "active",
-    revenue: "$12,800",
-  },
-  {
-    id: "3",
-    title: "AI & Machine Learning Conference",
-    image: "/placeholder.svg?height=200&width=400",
-    date: "Dec 5, 2024",
-    location: "Tech Center, NY",
-    registrations: 0,
-    capacity: 800,
-    status: "draft",
-    revenue: "$0",
-  },
-  {
-    id: "4",
-    title: "Startup Pitch Night",
-    image: "/placeholder.svg?height=200&width=400",
-    date: "Sep 20, 2024",
-    location: "Venture Hall, LA",
-    registrations: 450,
-    capacity: 450,
-    status: "completed",
-    revenue: "$8,500",
-  },
-]
-
 export default function EventsPage() {
+  const [events, setEvents] = useState([])
+  const [loading, setLoading] = useState(true)
+  const { toast } = useToast()
+
+  useEffect(() => {
+    loadEvents()
+  }, [])
+
+  const loadEvents = async () => {
+    try {
+      const data = await api.getEvents()
+      setEvents(data)
+    } catch (error: any) {
+      toast({
+        title: "Error",
+        description: error.message,
+        variant: "destructive",
+      })
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  const handleDelete = async (id: string) => {
+    try {
+      await api.deleteEvent(id)
+      toast({ title: "Success", description: "Event deleted" })
+      loadEvents()
+    } catch (error: any) {
+      toast({
+        title: "Error",
+        description: error.message,
+        variant: "destructive",
+      })
+    }
+  }
+
+  if (loading) return <div>Loading...</div>
   return (
     <div className="space-y-6">
       {/* Header */}
@@ -130,7 +124,10 @@ export default function EventsPage() {
 
       {/* Events Grid */}
       <div className="grid gap-6 md:grid-cols-2">
-        {events.map((event) => (
+        {events.length === 0 ? (
+          <p className="col-span-2 text-center text-muted-foreground">No events found. Create your first event!</p>
+        ) : (
+          events.map((event: any) => (
           <Card key={event.id} className="overflow-hidden">
             <div className="relative aspect-video">
               <Image
@@ -142,7 +139,7 @@ export default function EventsPage() {
               <Badge
                 className="absolute right-3 top-3"
                 variant={
-                  event.status === "active"
+                  event.status === "published"
                     ? "default"
                     : event.status === "draft"
                     ? "secondary"
@@ -164,7 +161,7 @@ export default function EventsPage() {
                   <div className="mt-2 space-y-1 text-sm text-muted-foreground">
                     <div className="flex items-center gap-2">
                       <Calendar className="h-4 w-4" />
-                      <span>{event.date}</span>
+                      <span>{new Date(event.date).toLocaleDateString()}</span>
                     </div>
                     <div className="flex items-center gap-2">
                       <MapPin className="h-4 w-4" />
@@ -173,7 +170,7 @@ export default function EventsPage() {
                     <div className="flex items-center gap-2">
                       <Users className="h-4 w-4" />
                       <span>
-                        {event.registrations} / {event.capacity} registrations
+                        {event.registeredCount} / {event.maxParticipants || 'Unlimited'} registrations
                       </span>
                     </div>
                   </div>
@@ -201,7 +198,7 @@ export default function EventsPage() {
                       <Copy className="mr-2 h-4 w-4" />
                       Duplicate
                     </DropdownMenuItem>
-                    <DropdownMenuItem className="text-destructive">
+                    <DropdownMenuItem className="text-destructive" onClick={() => handleDelete(event._id)}>
                       <Trash2 className="mr-2 h-4 w-4" />
                       Delete
                     </DropdownMenuItem>
@@ -210,7 +207,7 @@ export default function EventsPage() {
               </div>
               <div className="mt-4 flex items-center justify-between border-t pt-4">
                 <span className="text-sm text-muted-foreground">
-                  Revenue: <span className="font-medium text-foreground">{event.revenue}</span>
+                  Category: <span className="font-medium text-foreground">{event.category}</span>
                 </span>
                 <Button variant="outline" size="sm" asChild>
                   <Link href={`/dashboard/events/${event.id}`}>
@@ -220,7 +217,8 @@ export default function EventsPage() {
               </div>
             </CardContent>
           </Card>
-        ))}
+          ))
+        )}
       </div>
     </div>
   )
