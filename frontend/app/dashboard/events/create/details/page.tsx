@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import Link from "next/link"
 import { useRouter } from "next/navigation"
 import { Button } from "@/components/ui/button"
@@ -16,6 +16,7 @@ import {
   SelectValue,
 } from "@/components/ui/select"
 import { StepProgress } from "@/components/step-progress"
+import { useToast } from "@/hooks/use-toast"
 import {
   Type,
   Tag,
@@ -48,8 +49,12 @@ const categories = [
   "Other",
 ]
 
+const STORAGE_KEY = "event_draft_details"
+
 export default function CreateEventDetailsPage() {
   const router = useRouter()
+  const { toast } = useToast()
+  const [isLoaded, setIsLoaded] = useState(false)
   const [eventName, setEventName] = useState("")
   const [category, setCategory] = useState("")
   const [description, setDescription] = useState("")
@@ -57,8 +62,100 @@ export default function CreateEventDetailsPage() {
   const [endDate, setEndDate] = useState("")
   const [startTime, setStartTime] = useState("")
   const [venue, setVenue] = useState("")
+  const [bannerImage, setBannerImage] = useState<string | null>(null)
+
+  // Load saved data on mount
+  useEffect(() => {
+    const savedData = localStorage.getItem(STORAGE_KEY)
+    if (savedData) {
+      try {
+        const data = JSON.parse(savedData)
+        setEventName(data.eventName || "")
+        setCategory(data.category || "")
+        setDescription(data.description || "")
+        setStartDate(data.startDate || "")
+        setEndDate(data.endDate || "")
+        setStartTime(data.startTime || "")
+        setVenue(data.venue || "")
+        setBannerImage(data.bannerImage || null)
+      } catch (error) {
+        console.error("Failed to load saved data", error)
+      }
+    }
+    setIsLoaded(true)
+  }, [])
+
+  // Auto-save data whenever form changes (only after initial load)
+  useEffect(() => {
+    if (!isLoaded) return
+    
+    const formData = {
+      eventName,
+      category,
+      description,
+      startDate,
+      endDate,
+      startTime,
+      venue,
+      bannerImage,
+    }
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(formData))
+  }, [isLoaded, eventName, category, description, startDate, endDate, startTime, venue, bannerImage])
+
+  const handleSaveDraft = () => {
+    const formData = {
+      eventName,
+      category,
+      description,
+      startDate,
+      endDate,
+      startTime,
+      venue,
+      bannerImage,
+    }
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(formData))
+    toast({
+      title: "Draft Saved",
+      description: "Your event details have been saved successfully.",
+    })
+  }
+
+  const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0]
+    if (file) {
+      if (file.size > 5 * 1024 * 1024) {
+        toast({
+          title: "File too large",
+          description: "Please select an image under 5MB.",
+          variant: "destructive",
+        })
+        return
+      }
+      
+      const reader = new FileReader()
+      reader.onloadend = () => {
+        setBannerImage(reader.result as string)
+        toast({
+          title: "Image uploaded",
+          description: "Banner image has been uploaded successfully.",
+        })
+      }
+      reader.readAsDataURL(file)
+    }
+  }
 
   const handleNext = () => {
+    const formData = {
+      eventName,
+      category,
+      description,
+      startDate,
+      endDate,
+      startTime,
+      venue,
+      bannerImage,
+    }
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(formData))
     router.push("/dashboard/events/create/inventory")
   }
 
@@ -242,16 +339,46 @@ export default function CreateEventDetailsPage() {
                 <Upload className="h-4 w-4" />
                 Event Banner Image
               </Label>
-              <div className="flex flex-col items-center justify-center rounded-lg border-2 border-dashed p-8">
-                <Upload className="h-10 w-10 text-muted-foreground" />
-                <p className="mt-4 text-sm font-medium">Click to upload or drag and drop</p>
-                <p className="text-xs text-muted-foreground">
-                  Recommended size: 1200 x 600px (JPG, PNG, max 5MB)
-                </p>
-                <Button variant="outline" className="mt-4">
-                  Browse Files
-                </Button>
-              </div>
+              {bannerImage ? (
+                <div className="relative">
+                  <img
+                    src={bannerImage}
+                    alt="Event banner"
+                    className="w-full h-64 object-cover rounded-lg"
+                  />
+                  <Button
+                    variant="destructive"
+                    size="sm"
+                    className="absolute top-2 right-2"
+                    onClick={() => setBannerImage(null)}
+                  >
+                    Remove
+                  </Button>
+                </div>
+              ) : (
+                <div className="flex flex-col items-center justify-center rounded-lg border-2 border-dashed p-8">
+                  <Upload className="h-10 w-10 text-muted-foreground" />
+                  <p className="mt-4 text-sm font-medium">Click to upload or drag and drop</p>
+                  <p className="text-xs text-muted-foreground">
+                    Recommended size: 1200 x 600px (JPG, PNG, max 5MB)
+                  </p>
+                  <input
+                    type="file"
+                    accept="image/*"
+                    onChange={handleFileUpload}
+                    className="hidden"
+                    id="banner-upload"
+                  />
+                  <Button
+                    variant="outline"
+                    className="mt-4"
+                    onClick={() => document.getElementById('banner-upload')?.click()}
+                    type="button"
+                  >
+                    Browse Files
+                  </Button>
+                </div>
+              )}
             </div>
           </CardContent>
         </Card>
@@ -263,7 +390,7 @@ export default function CreateEventDetailsPage() {
           <Link href="/dashboard/events">Cancel and Return</Link>
         </Button>
         <div className="flex gap-3">
-          <Button variant="outline">Save Draft</Button>
+          <Button variant="outline" onClick={handleSaveDraft}>Save Draft</Button>
           <Button onClick={handleNext}>
             Next: Inventory Setup
             <ArrowRight className="ml-2 h-4 w-4" />
