@@ -1,18 +1,18 @@
 import { Navbar } from "@/components/navbar"
 import { DashboardSidebar } from "@/components/dashboard-sidebar"
 
-export default function ParticipantLayout({
+export default function DashboardLayout({
   children,
 }: {
   children: React.ReactNode
 }) {
   return (
     <div className="min-h-screen bg-muted/30">
-      <Navbar isLoggedIn={true} userRole="participant" userName="Alex Rivera" />
+      <Navbar isLoggedIn={true} userRole="organizer" userName="Alex Rivera" />
       <div className="flex">
-        <DashboardSidebar userRole="participant" />
-        <div className="flex-1 flex flex-col min-h-[calc(100vh-4rem)]">
-          <main className="flex-1">
+        <DashboardSidebar userRole="organizer" />
+        <div className="flex-1 flex flex-col min-h-[calc(100vh-4rem)] ml-56">
+          <main className="flex-1 p-6">
             {children}
           </main>
           <footer className="border-t bg-background px-6 py-4">

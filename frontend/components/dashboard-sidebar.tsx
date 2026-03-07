@@ -32,7 +32,7 @@ const organizerNavItems = [
 const participantNavItems = [
   { href: "/participant/dashboard", label: "My Dashboard", icon: LayoutDashboard },
   { href: "/participant/events", label: "Explore Events", icon: Globe },
-  { href: "/participant/teams", label: "Team Space", icon: Users },
+  { href: "/participant/team", label: "Team Space", icon: Users },
   { href: "/participant/notifications", label: "Notifications", icon: Bell },
 ]
 

@@ -9,7 +9,6 @@ const _geistMono = Geist_Mono({ subsets: ["latin"] });
 export const metadata: Metadata = {
   title: 'EventSphere - Smart Multi-Event Ecosystem Platform',
   description: 'Turn events into smart digital ecosystems. Manage hackathons, conferences, workshops, and more with seamless registration, team formation, and accommodation management.',
-  generator: 'v0.app',
   icons: {
     icon: [
       {
