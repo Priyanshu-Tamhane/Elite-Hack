@@ -17,6 +17,7 @@ import {
   SelectValue,
 } from "@/components/ui/select"
 import { StepProgress } from "@/components/step-progress"
+import { useEventCreation } from "@/lib/event-creation-context"
 import {
   ArrowRight,
   ArrowLeft,
@@ -28,8 +29,16 @@ import {
   Percent,
 } from "lucide-react"
 
-const steps = [
+const stepsBasic = [
   { label: "EVENT DETAILS", href: "/dashboard/events/create/details" },
+  { label: "INVENTORY", href: "/dashboard/events/create/inventory" },
+  { label: "PAYMENTS", href: "/dashboard/events/create/payments" },
+  { label: "REVIEW", href: "/dashboard/events/create/publish" },
+]
+
+const stepsCorporate = [
+  { label: "EVENT DETAILS", href: "/dashboard/events/create/details" },
+  { label: "CORPORATE DETAILS", href: "/dashboard/events/create/corporate" },
   { label: "INVENTORY", href: "/dashboard/events/create/inventory" },
   { label: "PAYMENTS", href: "/dashboard/events/create/payments" },
   { label: "REVIEW", href: "/dashboard/events/create/publish" },
@@ -37,6 +46,14 @@ const steps = [
 
 export default function CreateEventPaymentsPage() {
   const router = useRouter()
+  const { eventData } = useEventCreation()
+  const category = eventData.category || ""
+  
+  // Determine if corporate event
+  const isCorporateEvent = ['corporate event', 'conference', 'workshop'].includes(category.toLowerCase())
+  const steps = isCorporateEvent ? stepsCorporate : stepsBasic
+  const currentStepIndex = isCorporateEvent ? 3 : 2
+  
   const [eventType, setEventType] = useState<"free" | "paid">("paid")
   const [paymentGateway, setPaymentGateway] = useState("razorpay")
   const [keyId, setKeyId] = useState("rzp_live_...")
@@ -68,7 +85,7 @@ export default function CreateEventPaymentsPage() {
       </div>
 
       {/* Progress */}
-      <StepProgress steps={steps} currentStep={2} />
+      <StepProgress steps={steps} currentStep={currentStepIndex} />
 
       {/* Form */}
       <div className="space-y-6">

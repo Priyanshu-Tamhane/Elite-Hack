@@ -74,7 +74,44 @@ const eventSchema = new mongoose.Schema({
     email: String,
     phone: String,
     registeredAt: { type: Date, default: Date.now }
-  }]
+  }],
+  
+  // Corporate-specific fields
+  corporateDetails: {
+    companyMission: { type: String },
+    eventObjectives: { type: [String], default: [] },
+    targetAudience: { type: String },
+    dressCode: { type: String },
+    parkingInfo: { type: String },
+    contactPerson: { type: String },
+    contactEmail: { type: String },
+    departmentAllocations: [{
+      department: String,
+      allocatedSeats: Number,
+      registeredCount: { type: Number, default: 0 }
+    }],
+    budget: {
+      totalBudget: Number,
+      cateringBudget: Number,
+      venueBudget: Number,
+      marketingBudget: Number
+    },
+    vendors: [{
+      name: String,
+      service: String,
+      contact: String,
+      cost: Number
+    }]
+  },
+  
+  // Branding
+  branding: {
+    primaryColor: { type: String, default: '#2563eb' },
+    secondaryColor: { type: String, default: '#64748b' },
+    logoUrl: { type: String },
+    bannerUrl: { type: String }
+  }
+  
 }, { timestamps: true });
 
 module.exports = mongoose.model('Event', eventSchema);

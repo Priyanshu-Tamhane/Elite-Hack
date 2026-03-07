@@ -62,6 +62,14 @@ export default function RegisterPage() {
     } finally {
       setIsSubmitting(false)
     }
+    // const registration = {
+    //   eventSlug: slug,
+    //   name,
+    //   email,
+    //   phone,
+    //   registeredAt: new Date().toISOString(),
+    //   eventCategory: event.category || ""
+    // }
   }
 
   if (!event) {

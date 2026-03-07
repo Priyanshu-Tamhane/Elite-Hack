@@ -32,8 +32,16 @@ import {
   Ticket,
 } from "lucide-react"
 
-const steps = [
+const stepsBasic = [
   { label: "Event Details", href: "/dashboard/events/create/details" },
+  { label: "Inventory Setup", href: "/dashboard/events/create/inventory" },
+  { label: "Payment Settings", href: "/dashboard/events/create/payments" },
+  { label: "Publish Event", href: "/dashboard/events/create/publish" },
+]
+
+const stepsCorporate = [
+  { label: "Event Details", href: "/dashboard/events/create/details" },
+  { label: "Corporate Details", href: "/dashboard/events/create/corporate" },
   { label: "Inventory Setup", href: "/dashboard/events/create/inventory" },
   { label: "Payment Settings", href: "/dashboard/events/create/payments" },
   { label: "Publish Event", href: "/dashboard/events/create/publish" },
@@ -55,6 +63,11 @@ export default function CreateEventInventoryPage() {
   const router = useRouter()
   const { eventData } = useEventCreation()
   const category = eventData.category || ""
+  
+  // Determine if corporate event
+  const isCorporateEvent = ['corporate event', 'conference', 'workshop'].includes(category.toLowerCase())
+  const steps = isCorporateEvent ? stepsCorporate : stepsBasic
+  const currentStepIndex = isCorporateEvent ? 2 : 1
   
   const [totalCapacity, setTotalCapacity] = useState("1000")
   const [maxTeamSize, setMaxTeamSize] = useState("4")
@@ -90,7 +103,12 @@ export default function CreateEventInventoryPage() {
   }
 
   const handleBack = () => {
-    router.push("/dashboard/events/create/details")
+    // If corporate event, go back to corporate details page
+    if (isCorporateEvent) {
+      router.push("/dashboard/events/create/corporate")
+    } else {
+      router.push("/dashboard/events/create/details")
+    }
   }
 
   const removeTier = (id: number) => {
@@ -108,7 +126,7 @@ export default function CreateEventInventoryPage() {
       </div>
 
       {/* Progress */}
-      <StepProgress steps={steps} currentStep={1} />
+      <StepProgress steps={steps} currentStep={currentStepIndex} />
 
       {/* Form */}
       <div className="space-y-6">

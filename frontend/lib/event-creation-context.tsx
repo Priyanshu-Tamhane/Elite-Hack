@@ -11,6 +11,17 @@ interface EventCreationData {
   startTime?: string
   venue?: string
   bannerUrl?: string
+  // Corporate fields
+  companyMission?: string
+  eventObjectives?: string
+  targetAudience?: string
+  dressCode?: string
+  parkingInfo?: string
+  contactPerson?: string
+  contactEmail?: string
+  primaryColor?: string
+  secondaryColor?: string
+  logoUrl?: string
 }
 
 interface EventCreationContextType {

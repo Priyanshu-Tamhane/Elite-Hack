@@ -6,6 +6,7 @@ import { HackathonMicrosite } from "@/components/microsites/HackathonMicrosite"
 import { WeddingMicrosite } from "@/components/microsites/WeddingMicrosite"
 import { DefaultMicrosite } from "@/components/microsites/DefaultMicrosite"
 import { api } from "@/lib/api"
+import CorporateMicrosite from "@/components/microsites/CorporateMicrosite"
 
 export default function EventMicrositePage() {
   const params = useParams()
@@ -44,6 +45,37 @@ export default function EventMicrositePage() {
         </div>
       </div>
     )
+  }
+
+  const handleRegister = () => {
+    // Handle registration logic
+    console.log("Registering for event:", event.eventName)
+  }
+
+  // Render appropriate microsite based on category
+  if (event.category && (event.category.toLowerCase() === "corporate event" || event.category.toLowerCase() === "conference" || event.category.toLowerCase() === "workshop")) {
+    // Prepare event object with proper structure for CorporateMicrosite
+    const eventData = {
+      title: event.eventName || "Event",
+      description: event.description || "",
+      date: event.startDate,
+      location: event.venue || "",
+      bannerUrl: event.bannerUrl,
+      category: event.category,
+      maxParticipants: event.maxParticipants || 100,
+      registeredCount: event.registeredCount || 0,
+      organizer: {
+        name: event.organizerName || "Event Organizer",
+        company: event.companyName,
+        logo: event.companyLogo
+      },
+      corporateDetails: event.corporateDetails || {},
+      branding: event.branding || {
+        primaryColor: "#2563eb",
+        secondaryColor: "#64748b"
+      }
+    }
+    return <CorporateMicrosite event={eventData} onRegister={handleRegister} />
   }
 
   if (event.category === "hackathon") {

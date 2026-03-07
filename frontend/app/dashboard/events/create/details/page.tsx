@@ -64,6 +64,18 @@ export default function CreateEventDetailsPage() {
   const [startTime, setStartTime] = useState("")
   const [venue, setVenue] = useState("")
   const [bannerUrl, setBannerUrl] = useState("")
+  
+  // Corporate Fields
+  const [companyMission, setCompanyMission] = useState("")
+  const [eventObjectives, setEventObjectives] = useState("")
+  const [targetAudience, setTargetAudience] = useState("")
+  const [dressCode, setDressCode] = useState("")
+  const [parkingInfo, setParkingInfo] = useState("")
+  const [contactPerson, setContactPerson] = useState("")
+  const [contactEmail, setContactEmail] = useState("")
+  const [primaryColor, setPrimaryColor] = useState("#2563eb")
+  const [secondaryColor, setSecondaryColor] = useState("#64748b")
+  const [logoUrl, setLogoUrl] = useState("")
 
   // Load saved data on mount
   useEffect(() => {
@@ -79,6 +91,16 @@ export default function CreateEventDetailsPage() {
         setStartTime(data.startTime || "")
         setVenue(data.venue || "")
         setBannerUrl(data.bannerUrl || "")
+        setCompanyMission(data.companyMission || "")
+        setEventObjectives(data.eventObjectives || "")
+        setTargetAudience(data.targetAudience || "")
+        setDressCode(data.dressCode || "")
+        setParkingInfo(data.parkingInfo || "")
+        setContactPerson(data.contactPerson || "")
+        setContactEmail(data.contactEmail || "")
+        setPrimaryColor(data.primaryColor || "#2563eb")
+        setSecondaryColor(data.secondaryColor || "#64748b")
+        setLogoUrl(data.logoUrl || "")
       } catch (error) {
         console.error("Failed to load saved data", error)
       }
@@ -99,9 +121,19 @@ export default function CreateEventDetailsPage() {
       startTime,
       venue,
       bannerUrl,
+      companyMission,
+      eventObjectives,
+      targetAudience,
+      dressCode,
+      parkingInfo,
+      contactPerson,
+      contactEmail,
+      primaryColor,
+      secondaryColor,
+      logoUrl,
     }
     localStorage.setItem(STORAGE_KEY, JSON.stringify(formData))
-  }, [isLoaded, eventName, category, description, startDate, endDate, startTime, venue, bannerUrl])
+  }, [isLoaded, eventName, category, description, startDate, endDate, startTime, venue, bannerUrl, companyMission, eventObjectives, targetAudience, dressCode, parkingInfo, contactPerson, contactEmail, primaryColor, secondaryColor, logoUrl])
 
   const handleSaveDraft = () => {
     const formData = {
@@ -113,6 +145,16 @@ export default function CreateEventDetailsPage() {
       startTime,
       venue,
       bannerUrl,
+      companyMission,
+      eventObjectives,
+      targetAudience,
+      dressCode,
+      parkingInfo,
+      contactPerson,
+      contactEmail,
+      primaryColor,
+      secondaryColor,
+      logoUrl,
     }
     localStorage.setItem(STORAGE_KEY, JSON.stringify(formData))
     toast({
@@ -141,10 +183,26 @@ export default function CreateEventDetailsPage() {
       startTime,
       venue,
       bannerUrl,
+      companyMission,
+      eventObjectives,
+      targetAudience,
+      dressCode,
+      parkingInfo,
+      contactPerson,
+      contactEmail,
+      primaryColor,
+      secondaryColor,
+      logoUrl,
     }
     localStorage.setItem(STORAGE_KEY, JSON.stringify(formData))
-    updateEventData({ eventName, category, description, startDate, endDate, startTime, venue, bannerUrl })
-    router.push("/dashboard/events/create/inventory")
+    updateEventData({ eventName, category, description, startDate, endDate, startTime, venue, bannerUrl, companyMission, eventObjectives, targetAudience, dressCode, parkingInfo, contactPerson, contactEmail, primaryColor, secondaryColor, logoUrl })
+    
+    // If corporate event, go to corporate details page; otherwise go to inventory
+    if (category.toLowerCase() === "corporate event" || category.toLowerCase() === "conference" || category.toLowerCase() === "workshop") {
+      router.push("/dashboard/events/create/corporate")
+    } else {
+      router.push("/dashboard/events/create/inventory")
+    }
   }
 
   return (
@@ -364,7 +422,7 @@ export default function CreateEventDetailsPage() {
         <div className="flex gap-3">
           <Button variant="outline" onClick={handleSaveDraft}>Save Draft</Button>
           <Button onClick={handleNext}>
-            Next: Inventory Setup
+            Next Step
             <ArrowRight className="ml-2 h-4 w-4" />
           </Button>
         </div>

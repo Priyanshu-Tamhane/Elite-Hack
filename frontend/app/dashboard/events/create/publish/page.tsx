@@ -8,10 +8,22 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { StepProgress } from "@/components/step-progress"
 import { CheckCircle, ExternalLink, Copy, Rocket, Lock } from "lucide-react"
 import { useToast } from "@/hooks/use-toast"
+<<<<<<< Updated upstream
+=======
+import { useEventCreation } from "@/lib/event-creation-context"
+>>>>>>> Stashed changes
 import { api } from "@/lib/api"
 
-const steps = [
+const stepsBasic = [
   { label: "Event Details", href: "/dashboard/events/create/details" },
+  { label: "Inventory", href: "/dashboard/events/create/inventory" },
+  { label: "Payments", href: "/dashboard/events/create/payments" },
+  { label: "Publish", href: "/dashboard/events/create/publish" },
+]
+
+const stepsCorporate = [
+  { label: "Event Details", href: "/dashboard/events/create/details" },
+  { label: "Corporate Details", href: "/dashboard/events/create/corporate" },
   { label: "Inventory", href: "/dashboard/events/create/inventory" },
   { label: "Payments", href: "/dashboard/events/create/payments" },
   { label: "Publish", href: "/dashboard/events/create/publish" },
@@ -38,13 +50,25 @@ function generatePassword(): string {
 export default function PublishEventPage() {
   const router = useRouter()
   const { toast } = useToast()
+  const { eventData } = useEventCreation()
+  const category = eventData.category || ""
+  
+  // Determine if corporate event
+  const isCorporateEvent = ['corporate event', 'conference', 'workshop'].includes(category.toLowerCase())
+  const steps = isCorporateEvent ? stepsCorporate : stepsBasic
+  const currentStepIndex = isCorporateEvent ? 4 : 3
+  
   const [isPublished, setIsPublished] = useState(false)
   const [eventSlug, setEventSlug] = useState("")
   const [eventName, setEventName] = useState("")
   const [publicUrl, setPublicUrl] = useState("")
   const [manageUrl, setManageUrl] = useState("")
+<<<<<<< Updated upstream
   const [managementPassword, setManagementPassword] = useState("")
   const [isPublishing, setIsPublishing] = useState(false)
+=======
+  const [isLoading, setIsLoading] = useState(false)
+>>>>>>> Stashed changes
 
   useEffect(() => {
     const savedData = localStorage.getItem("event_draft_details")
@@ -54,8 +78,17 @@ export default function PublishEventPage() {
         const slug = generateSlug(data.eventName || "my-event")
         setEventSlug(slug)
         setEventName(data.eventName || "My Event")
-        setPublicUrl(`${window.location.origin}/event/${slug}`)
-        setManageUrl(`${window.location.origin}/event/${slug}/manage`)
+
+        const category = (data.category || "").toLowerCase()
+        const isCorporate = ["corporate event", "conference", "workshop"].includes(category)
+
+        if (isCorporate) {
+          setPublicUrl(`${window.location.origin}/corporate-demo`)
+          setManageUrl(`${window.location.origin}/corporate-demo/manage`)
+        } else {
+          setPublicUrl(`${window.location.origin}/event/${slug}`)
+          setManageUrl(`${window.location.origin}/event/${slug}/manage`)
+        }
       } catch (error) {
         console.error("Failed to load event data", error)
       }
@@ -69,11 +102,18 @@ export default function PublishEventPage() {
     if (savedData) {
       setIsPublishing(true)
       try {
+        setIsLoading(true)
         const data = JSON.parse(savedData)
+<<<<<<< Updated upstream
         const inventory = inventoryData ? JSON.parse(inventoryData) : {}
+=======
+        
+        // Generate slug
+>>>>>>> Stashed changes
         const slug = generateSlug(data.eventName || "my-event")
         const password = generatePassword()
         
+<<<<<<< Updated upstream
         const publishedEvent = {
           eventName: data.eventName,
           description: data.description || "No description provided",
@@ -116,11 +156,70 @@ export default function PublishEventPage() {
         localStorage.removeItem("event_draft_inventory")
         
         setManagementPassword(password)
+=======
+        // Save to localStorage FIRST (so microsite works even if backend fails)
+        const publishedEvent = {
+          ...data,
+          slug: slug,
+          publishedAt: new Date().toISOString(),
+          status: "published"
+        }
+        
+        const publishedEvents = JSON.parse(localStorage.getItem("published_events") || "[]")
+        publishedEvents.push(publishedEvent)
+        localStorage.setItem("published_events", JSON.stringify(publishedEvents))
+        
+        // Clear draft
+        localStorage.removeItem("event_draft_details")
+        
+        // Try to create event via API (non-blocking)
+        try {
+          const eventData = {
+            title: data.eventName,
+            description: data.description,
+            date: new Date(data.startDate),
+            location: data.venue,
+            category: data.category,
+            bannerUrl: data.bannerUrl,
+            maxParticipants: data.maxParticipants || 100,
+            status: "published",
+            corporateDetails: {
+              companyMission: data.companyMission,
+              eventObjectives: data.eventObjectives ? data.eventObjectives.split('\n').filter(obj => obj.trim()) : [],
+              targetAudience: data.targetAudience,
+              dressCode: data.dressCode,
+              parkingInfo: data.parkingInfo,
+              contactPerson: data.contactPerson,
+              contactEmail: data.contactEmail
+            },
+            branding: {
+              primaryColor: data.primaryColor || "#2563eb",
+              secondaryColor: data.secondaryColor || "#64748b",
+              logoUrl: data.logoUrl,
+              bannerUrl: data.bannerUrl
+            }
+          };
+          const createdEvent = await api.createEvent(eventData);
+          
+          // Update with backend ID if successful
+          const updatedEvents = JSON.parse(localStorage.getItem("published_events") || "[]")
+          const eventIndex = updatedEvents.findIndex((e: any) => e.slug === slug)
+          if (eventIndex !== -1) {
+            updatedEvents[eventIndex].id = createdEvent._id
+            localStorage.setItem("published_events", JSON.stringify(updatedEvents))
+          }
+        } catch (apiError) {
+          // Backend call failed, but event is already saved to localStorage
+          console.warn("Backend API failed, but event saved locally:", apiError)
+        }
+        
+>>>>>>> Stashed changes
         setIsPublished(true)
         toast({
           title: "Event Published!",
           description: "Your event microsite is now live.",
         })
+<<<<<<< Updated upstream
       } catch (error: any) {
         toast({
           title: "Error",
@@ -129,6 +228,17 @@ export default function PublishEventPage() {
         })
       } finally {
         setIsPublishing(false)
+=======
+      } catch (error) {
+        console.error("Error publishing event:", error)
+        toast({
+          title: "Error",
+          description: error instanceof Error ? error.message : "Failed to publish event. Please try again.",
+          variant: "destructive",
+        })
+      } finally {
+        setIsLoading(false)
+>>>>>>> Stashed changes
       }
     }
   }
@@ -271,7 +381,7 @@ export default function PublishEventPage() {
         </p>
       </div>
 
-      <StepProgress steps={steps} currentStep={3} />
+      <StepProgress steps={steps} currentStep={currentStepIndex} />
 
       <Card>
         <CardHeader>
