@@ -10,7 +10,9 @@ const eventSchema = new mongoose.Schema({
   startTime: { type: String },
   venue: { type: String, required: true },
   bannerUrl: { type: String },
+  bannerImage: { type: String },
   slug: { type: String, required: true, unique: true },
+  managementPassword: { type: String },
   status: { type: String, enum: ['draft', 'published', 'cancelled'], default: 'draft' },
   organizerId: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true },
   
@@ -66,7 +68,13 @@ const eventSchema = new mongoose.Schema({
   adminPassword: { type: String },
   
   maxParticipants: { type: Number },
-  registeredCount: { type: Number, default: 0 }
+  registeredCount: { type: Number, default: 0 },
+  participants: [{
+    name: String,
+    email: String,
+    phone: String,
+    registeredAt: { type: Date, default: Date.now }
+  }]
 }, { timestamps: true });
 
 module.exports = mongoose.model('Event', eventSchema);

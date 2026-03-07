@@ -4,10 +4,10 @@ const Registration = require('../models/Registration');
 const RoomAssignment = require('../models/RoomAssignment');
 const Notification = require('../models/Notification');
 const auth = require('../middleware/auth');
+const { sendRegistrationEmail } = require('../utils/emailService');
 
 const router = express.Router();
 
-// Get all events for organizer
 router.get('/', auth, async (req, res) => {
   try {
     const events = await Event.find({ organizerId: req.userId }).sort({ createdAt: -1 });
@@ -17,8 +17,7 @@ router.get('/', auth, async (req, res) => {
   }
 });
 
-// Get event by ID
-router.get('/:id', auth, async (req, res) => {
+router.get('/:id', async (req, res) => {
   try {
     const event = await Event.findById(req.params.id);
     if (!event) {
@@ -30,10 +29,9 @@ router.get('/:id', auth, async (req, res) => {
   }
 });
 
-// Get event by slug (public)
 router.get('/slug/:slug', async (req, res) => {
   try {
-    const event = await Event.findOne({ slug: req.params.slug, status: 'published' });
+    const event = await Event.findOne({ slug: req.params.slug });
     if (!event) {
       return res.status(404).json({ message: 'Event not found' });
     }
@@ -43,7 +41,6 @@ router.get('/slug/:slug', async (req, res) => {
   }
 });
 
-// Create event
 router.post('/', auth, async (req, res) => {
   try {
     const event = new Event({ ...req.body, organizerId: req.userId });
@@ -54,7 +51,37 @@ router.post('/', auth, async (req, res) => {
   }
 });
 
-// Update event
+router.post('/:slug/register', async (req, res) => {
+  try {
+    const event = await Event.findOne({ slug: req.params.slug });
+    if (!event) {
+      return res.status(404).json({ message: 'Event not found' });
+    }
+    
+    event.participants.push(req.body);
+    event.registeredCount = event.participants.length;
+    await event.save();
+    
+    if (req.body.email && req.body.name) {
+      await sendRegistrationEmail(
+        req.body.email,
+        req.body.name,
+        event.eventName,
+        {
+          startDate: event.startDate,
+          venue: event.venue,
+          startTime: event.startTime,
+          slug: event.slug
+        }
+      );
+    }
+    
+    res.status(201).json({ message: 'Registration successful', event });
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+});
+
 router.put('/:id', auth, async (req, res) => {
   try {
     const event = await Event.findOneAndUpdate(
@@ -71,7 +98,6 @@ router.put('/:id', auth, async (req, res) => {
   }
 });
 
-// Update event by slug
 router.put('/slug/:slug', async (req, res) => {
   try {
     const event = await Event.findOneAndUpdate(
@@ -88,7 +114,6 @@ router.put('/slug/:slug', async (req, res) => {
   }
 });
 
-// Delete event
 router.delete('/:id', auth, async (req, res) => {
   try {
     const event = await Event.findOneAndDelete({ _id: req.params.id, organizerId: req.userId });
@@ -101,9 +126,8 @@ router.delete('/:id', auth, async (req, res) => {
   }
 });
 
-// ===== REGISTRATIONS =====
+// ===== REGISTRATIONS (Wedding Management) =====
 
-// Get registrations for event
 router.get('/:slug/registrations', async (req, res) => {
   try {
     const registrations = await Registration.find({ eventSlug: req.params.slug }).sort({ registeredAt: -1 });
@@ -113,7 +137,6 @@ router.get('/:slug/registrations', async (req, res) => {
   }
 });
 
-// Create registration
 router.post('/:slug/registrations', async (req, res) => {
   try {
     const event = await Event.findOne({ slug: req.params.slug });
@@ -128,7 +151,6 @@ router.post('/:slug/registrations', async (req, res) => {
   }
 });
 
-// Delete registration
 router.delete('/:slug/registrations/:id', async (req, res) => {
   try {
     await Registration.findByIdAndDelete(req.params.id);
@@ -140,7 +162,6 @@ router.delete('/:slug/registrations/:id', async (req, res) => {
 
 // ===== ROOM ASSIGNMENTS =====
 
-// Get room assignments
 router.get('/:slug/room-assignments', async (req, res) => {
   try {
     const assignments = await RoomAssignment.find({ eventSlug: req.params.slug });
@@ -150,7 +171,6 @@ router.get('/:slug/room-assignments', async (req, res) => {
   }
 });
 
-// Create room assignment
 router.post('/:slug/room-assignments', async (req, res) => {
   try {
     const event = await Event.findOne({ slug: req.params.slug });
@@ -165,7 +185,6 @@ router.post('/:slug/room-assignments', async (req, res) => {
   }
 });
 
-// Delete room assignment
 router.delete('/:slug/room-assignments/:guestId', async (req, res) => {
   try {
     await RoomAssignment.findOneAndDelete({ eventSlug: req.params.slug, guestId: req.params.guestId });
@@ -177,7 +196,6 @@ router.delete('/:slug/room-assignments/:guestId', async (req, res) => {
 
 // ===== NOTIFICATIONS =====
 
-// Get notifications
 router.get('/:slug/notifications', async (req, res) => {
   try {
     const notifications = await Notification.find({ eventSlug: req.params.slug }).sort({ sentAt: -1 });
@@ -187,7 +205,6 @@ router.get('/:slug/notifications', async (req, res) => {
   }
 });
 
-// Create notification
 router.post('/:slug/notifications', async (req, res) => {
   try {
     const event = await Event.findOne({ slug: req.params.slug });
