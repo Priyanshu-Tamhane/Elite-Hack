@@ -8,16 +8,14 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Checkbox } from "@/components/ui/checkbox"
-import { Mail, Lock, User, ArrowRight, Check } from "lucide-react"
+import { Mail, Lock, User, ArrowRight } from "lucide-react"
 import { useToast } from "@/hooks/use-toast"
 
 export default function SignupPage() {
   const router = useRouter()
   const { register } = useAuth()
   const { toast } = useToast()
-  const [role, setRole] = useState<"organizer" | "participant">("organizer")
   const [name, setName] = useState("")
   const [email, setEmail] = useState("")
   const [password, setPassword] = useState("")
@@ -30,17 +28,13 @@ export default function SignupPage() {
     setLoading(true)
     
     try {
-      await register(name, email, password, role)
+      await register(name, email, password, "organizer")
       toast({
         title: "Success",
         description: "Account created successfully",
       })
       
-      if (role === "organizer") {
-        router.push("/dashboard")
-      } else {
-        router.push("/participant/dashboard")
-      }
+      router.push("/dashboard")
     } catch (error: any) {
       toast({
         title: "Error",
@@ -80,23 +74,6 @@ export default function SignupPage() {
         </CardHeader>
         <CardContent>
           <form onSubmit={handleSignup} className="space-y-6">
-            {/* Role Selection */}
-            <div className="space-y-2">
-              <Label className="text-xs font-medium text-muted-foreground">I WANT TO</Label>
-              <Tabs value={role} onValueChange={(v) => setRole(v as "organizer" | "participant")} className="w-full">
-                <TabsList className="grid w-full grid-cols-2">
-                  <TabsTrigger value="organizer" className="gap-2">
-                    {role === "organizer" && <Check className="h-4 w-4" />}
-                    Organize Events
-                  </TabsTrigger>
-                  <TabsTrigger value="participant" className="gap-2">
-                    {role === "participant" && <Check className="h-4 w-4" />}
-                    Join Events
-                  </TabsTrigger>
-                </TabsList>
-              </Tabs>
-            </div>
-
             {/* Name */}
             <div className="space-y-2">
               <Label htmlFor="name">Full Name</Label>
