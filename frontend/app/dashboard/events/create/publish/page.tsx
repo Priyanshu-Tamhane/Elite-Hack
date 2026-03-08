@@ -63,73 +63,105 @@ export default function PublishEventPage() {
   }, [])
 
   const handlePublish = async () => {
-    const savedData = localStorage.getItem("event_draft_details")
-    const inventoryData = localStorage.getItem("event_draft_inventory")
-    
-    if (savedData) {
-      setIsPublishing(true)
-      try {
-        const data = JSON.parse(savedData)
-        const inventory = inventoryData ? JSON.parse(inventoryData) : {}
-        const slug = generateSlug(data.eventName || "my-event")
-        const password = generatePassword()
-        
-        const publishedEvent = {
-          eventName: data.eventName,
-          description: data.description || "No description provided",
-          category: data.category,
-          startDate: data.startDate,
-          endDate: data.endDate,
-          startTime: data.startTime,
-          venue: data.venue,
-          bannerUrl: data.bannerUrl,
-          slug,
-          status: "published",
-          adminPassword: password,
-          inventory: {
-            maxParticipants: inventory.maxParticipants,
-            teamSize: inventory.teamSize,
-            twinRooms: inventory.twinRooms,
-            suites: inventory.suites,
-            bunkBeds: inventory.bunkBeds
-          },
-          rsvp_settings: {
-            enabled: true,
-            plus_one: true,
-            max_guests: 5,
-            meal_preference: true
-          },
-          media: { hero_image: "", gallery: [] },
-          schedule: [],
-          accommodation: {
-            hotel_name: "",
-            twin_rooms: inventory.twinRooms || 0,
-            suites: inventory.suites || 0,
-            bunk_beds: inventory.bunkBeds || 0
-          },
-          contact: { name: "", phone: "", email: "" }
-        }
-        
-        await api.createEvent(publishedEvent)
-        
-        localStorage.removeItem("event_draft_details")
-        localStorage.removeItem("event_draft_inventory")
-        
-        setManagementPassword(password)
-        setIsPublished(true)
-        toast({
-          title: "Event Published!",
-          description: "Your event microsite is now live.",
-        })
-      } catch (error: any) {
-        toast({
-          title: "Error",
-          description: error.message || "Failed to publish event. Please try again.",
-          variant: "destructive",
-        })
-      } finally {
-        setIsPublishing(false)
+    const savedDetails = localStorage.getItem("event_draft_details")
+    const savedInventory = localStorage.getItem("event_draft_inventory")
+    const savedPayments = localStorage.getItem("event_draft_payments")
+
+    if (!savedDetails) {
+      toast({ title: "Missing details", description: "Please complete Step 1 first.", variant: "destructive" })
+      return
+    }
+
+    setIsPublishing(true)
+    try {
+      const data = JSON.parse(savedDetails)
+      const inventory = savedInventory ? JSON.parse(savedInventory) : {}
+      const payments = savedPayments ? JSON.parse(savedPayments) : {}
+      const slug = generateSlug(data.eventName || "my-event")
+      const password = generatePassword()
+      const isConference = data.category === "conference"
+
+      const publishedEvent: Record<string, any> = {
+        eventName: data.eventName,
+        description: data.description || "No description provided",
+        category: data.category,
+        startDate: data.startDate,
+        endDate: data.endDate,
+        startTime: data.startTime,
+        venue: data.venue || "TBD",
+        bannerUrl: data.bannerUrl || "",
+        slug,
+        status: "published",
+        adminPassword: password,
+        // Generic inventory fields
+        inventory: {
+          maxParticipants: inventory.totalCapacity,
+          teamSize: inventory.maxTeamSize,
+          twinRooms: inventory.accommodationSlots?.twin,
+          suites: inventory.accommodationSlots?.suite,
+          bunkBeds: inventory.accommodationSlots?.bunk,
+        },
+        rsvp_settings: { enabled: true, plus_one: true, max_guests: 5, meal_preference: true },
+        media: { hero_image: "", gallery: [] },
+        schedule: [],
+        accommodation: {
+          hotel_name: "",
+          twin_rooms: inventory.accommodationSlots?.twin || 0,
+          suites: inventory.accommodationSlots?.suite || 0,
+          bunk_beds: inventory.accommodationSlots?.bunk || 0,
+        },
+        contact: { name: "", phone: "", email: "" },
       }
+
+      // ── Conference-specific payload ──
+      if (isConference) {
+        publishedEvent.conferenceInfo = {
+          tagline: data.tagline || "",
+          eventMode: data.eventMode || "In-Person",
+          logo: data.logoUrl || "",
+        }
+        publishedEvent.registrationSettings = {
+          registrationType: payments.eventType || data.registrationType || "free",
+          deadline: data.registrationDeadline || null,
+          tickets: (inventory.tickets || []).map((t: any) => ({
+            type: t.type,
+            price: t.price ?? null,
+            currency: t.currency || "USD",
+            paperSubmission: t.paperSubmission || false,
+            benefits: t.benefits || [],
+            color: t.color || "indigo",
+          })),
+        }
+        // Agenda from details step
+        if (data.agenda?.length) {
+          publishedEvent.agenda = data.agenda.map((d: any, i: number) => ({
+            day: i + 1,
+            label: d.label || `Day ${i + 1}`,
+            date: d.date || "",
+            sessions: (d.sessions || []).filter((s: any) => s.title),
+          }))
+        }
+        publishedEvent.resources = data.resources || []
+      }
+
+      await api.createEvent(publishedEvent)
+
+      // Cleanup all draft keys
+      localStorage.removeItem("event_draft_details")
+      localStorage.removeItem("event_draft_inventory")
+      localStorage.removeItem("event_draft_payments")
+
+      setManagementPassword(password)
+      setIsPublished(true)
+      toast({ title: "Event Published! 🎉", description: "Your event microsite is now live." })
+    } catch (error: any) {
+      toast({
+        title: "Error",
+        description: error.message || "Failed to publish event. Please try again.",
+        variant: "destructive",
+      })
+    } finally {
+      setIsPublishing(false)
     }
   }
 
