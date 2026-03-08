@@ -35,7 +35,7 @@ export function WeddingManagementSidebar({ slug }: WeddingManagementSidebarProps
 
   const handleLogout = () => {
     sessionStorage.removeItem("event_admin")
-    window.location.href = `/event/${slug}/manage/login`
+    window.location.href = `/event/${slug}/manage-login`
   }
 
   return (

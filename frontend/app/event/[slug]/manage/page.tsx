@@ -14,7 +14,7 @@ export default function EventManagePage() {
     if (authKey === slug) {
       router.push(`/event/${slug}/manage/dashboard`)
     } else {
-      router.push(`/event/${slug}/manage/login`)
+      router.push(`/event/${slug}/manage-login`)
     }
   }, [slug, router])
 

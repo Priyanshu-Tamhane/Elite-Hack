@@ -106,8 +106,8 @@ export function WeddingMicrosite({ event }: WeddingMicrositeProps) {
       <section style={{
         minHeight: "100vh", position: "relative", display: "flex", flexDirection: "column",
         alignItems: "center", justifyContent: "center", overflow: "hidden",
-        background: event.bannerUrl
-          ? `linear-gradient(rgba(10,6,3,0.45), rgba(10,6,3,0.55)), url(${event.bannerUrl}) center/cover`
+        background: (event.bannerUrl || event.bannerImage)
+          ? `linear-gradient(rgba(10,6,3,0.45), rgba(10,6,3,0.55)), url(${event.bannerUrl || event.bannerImage}) center/cover`
           : `linear-gradient(135deg, #1a0f06 0%, #2e1a0a 50%, ${primaryColor}55 100%)`
       }}>
         <div style={{ position: "relative", zIndex: 2, textAlign: "center", padding: "0 24px" }}>
