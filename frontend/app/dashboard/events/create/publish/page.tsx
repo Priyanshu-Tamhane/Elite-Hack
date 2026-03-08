@@ -8,10 +8,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { StepProgress } from "@/components/step-progress"
 import { CheckCircle, ExternalLink, Copy, Rocket, Lock } from "lucide-react"
 import { useToast } from "@/hooks/use-toast"
-<<<<<<< Updated upstream
-=======
 import { useEventCreation } from "@/lib/event-creation-context"
->>>>>>> Stashed changes
 import { api } from "@/lib/api"
 
 const stepsBasic = [
@@ -51,24 +48,19 @@ export default function PublishEventPage() {
   const router = useRouter()
   const { toast } = useToast()
   const { eventData } = useEventCreation()
-  const category = eventData.category || ""
+  const category = eventData?.category || ""
   
-  // Determine if corporate event
-  const isCorporateEvent = ['corporate event', 'conference', 'workshop'].includes(category.toLowerCase())
+  const isCorporateEvent = ['corporate event', 'conference', 'workshop'].includes((category || "").toLowerCase())
   const steps = isCorporateEvent ? stepsCorporate : stepsBasic
   const currentStepIndex = isCorporateEvent ? 4 : 3
-  
+
   const [isPublished, setIsPublished] = useState(false)
   const [eventSlug, setEventSlug] = useState("")
   const [eventName, setEventName] = useState("")
   const [publicUrl, setPublicUrl] = useState("")
   const [manageUrl, setManageUrl] = useState("")
-<<<<<<< Updated upstream
   const [managementPassword, setManagementPassword] = useState("")
   const [isPublishing, setIsPublishing] = useState(false)
-=======
-  const [isLoading, setIsLoading] = useState(false)
->>>>>>> Stashed changes
 
   useEffect(() => {
     const savedData = localStorage.getItem("event_draft_details")
@@ -99,147 +91,91 @@ export default function PublishEventPage() {
     const savedData = localStorage.getItem("event_draft_details")
     const inventoryData = localStorage.getItem("event_draft_inventory")
     
-    if (savedData) {
-      setIsPublishing(true)
+    if (!savedData) return
+
+    setIsPublishing(true)
+    try {
+      const data = JSON.parse(savedData)
+      const inventory = inventoryData ? JSON.parse(inventoryData) : {}
+
+      const slug = generateSlug(data.eventName || "my-event")
+      const password = generatePassword()
+
+      const publishedEvent = {
+        ...data,
+        slug,
+        adminPassword: password,
+        publishedAt: new Date().toISOString(),
+        status: "published",
+        inventory: inventory || {}
+      }
+
+      const publishedEvents = JSON.parse(localStorage.getItem("published_events") || "[]")
+      publishedEvents.push(publishedEvent)
+      localStorage.setItem("published_events", JSON.stringify(publishedEvents))
+
+      localStorage.removeItem("event_draft_details")
+      localStorage.removeItem("event_draft_inventory")
+
       try {
-        setIsLoading(true)
-        const data = JSON.parse(savedData)
-<<<<<<< Updated upstream
-        const inventory = inventoryData ? JSON.parse(inventoryData) : {}
-=======
-        
-        // Generate slug
->>>>>>> Stashed changes
-        const slug = generateSlug(data.eventName || "my-event")
-        const password = generatePassword()
-        
-<<<<<<< Updated upstream
-        const publishedEvent = {
-          eventName: data.eventName,
-          description: data.description || "No description provided",
+        const eventDataForApi: any = {
+          title: data.eventName,
+          description: data.description,
+          date: data.startDate ? new Date(data.startDate) : undefined,
+          location: data.venue,
           category: data.category,
-          startDate: data.startDate,
-          endDate: data.endDate,
-          startTime: data.startTime,
-          venue: data.venue,
           bannerUrl: data.bannerUrl,
-          slug,
+          maxParticipants: inventory.maxParticipants || 100,
           status: "published",
           adminPassword: password,
-          inventory: {
-            maxParticipants: inventory.maxParticipants,
-            teamSize: inventory.teamSize,
-            twinRooms: inventory.twinRooms,
-            suites: inventory.suites,
-            bunkBeds: inventory.bunkBeds
+          corporateDetails: {
+            companyMission: data.companyMission,
+            eventObjectives: data.eventObjectives
+              ? (Array.isArray(data.eventObjectives)
+                  ? data.eventObjectives
+                  : data.eventObjectives.split('\n').filter((s: string) => s.trim()))
+              : [],
+            targetAudience: data.targetAudience,
+            dressCode: data.dressCode,
+            parkingInfo: data.parkingInfo,
+            contactPerson: data.contactPerson,
+            contactEmail: data.contactEmail
           },
-          rsvp_settings: {
-            enabled: true,
-            plus_one: true,
-            max_guests: 5,
-            meal_preference: true
-          },
-          media: { hero_image: "", gallery: [] },
-          schedule: [],
-          accommodation: {
-            hotel_name: "",
-            twin_rooms: inventory.twinRooms || 0,
-            suites: inventory.suites || 0,
-            bunk_beds: inventory.bunkBeds || 0
-          },
-          contact: { name: "", phone: "", email: "" }
-        }
-        
-        await api.createEvent(publishedEvent)
-        
-        localStorage.removeItem("event_draft_details")
-        localStorage.removeItem("event_draft_inventory")
-        
-        setManagementPassword(password)
-=======
-        // Save to localStorage FIRST (so microsite works even if backend fails)
-        const publishedEvent = {
-          ...data,
-          slug: slug,
-          publishedAt: new Date().toISOString(),
-          status: "published"
-        }
-        
-        const publishedEvents = JSON.parse(localStorage.getItem("published_events") || "[]")
-        publishedEvents.push(publishedEvent)
-        localStorage.setItem("published_events", JSON.stringify(publishedEvents))
-        
-        // Clear draft
-        localStorage.removeItem("event_draft_details")
-        
-        // Try to create event via API (non-blocking)
-        try {
-          const eventData = {
-            title: data.eventName,
-            description: data.description,
-            date: new Date(data.startDate),
-            location: data.venue,
-            category: data.category,
-            bannerUrl: data.bannerUrl,
-            maxParticipants: data.maxParticipants || 100,
-            status: "published",
-            corporateDetails: {
-              companyMission: data.companyMission,
-              eventObjectives: data.eventObjectives ? data.eventObjectives.split('\n').filter(obj => obj.trim()) : [],
-              targetAudience: data.targetAudience,
-              dressCode: data.dressCode,
-              parkingInfo: data.parkingInfo,
-              contactPerson: data.contactPerson,
-              contactEmail: data.contactEmail
-            },
-            branding: {
-              primaryColor: data.primaryColor || "#2563eb",
-              secondaryColor: data.secondaryColor || "#64748b",
-              logoUrl: data.logoUrl,
-              bannerUrl: data.bannerUrl
-            }
-          };
-          const createdEvent = await api.createEvent(eventData);
-          
-          // Update with backend ID if successful
-          const updatedEvents = JSON.parse(localStorage.getItem("published_events") || "[]")
-          const eventIndex = updatedEvents.findIndex((e: any) => e.slug === slug)
-          if (eventIndex !== -1) {
-            updatedEvents[eventIndex].id = createdEvent._id
-            localStorage.setItem("published_events", JSON.stringify(updatedEvents))
+          branding: {
+            primaryColor: data.primaryColor || "#2563eb",
+            secondaryColor: data.secondaryColor || "#64748b",
+            logoUrl: data.logoUrl,
+            bannerUrl: data.bannerUrl
           }
-        } catch (apiError) {
-          // Backend call failed, but event is already saved to localStorage
-          console.warn("Backend API failed, but event saved locally:", apiError)
         }
-        
->>>>>>> Stashed changes
-        setIsPublished(true)
-        toast({
-          title: "Event Published!",
-          description: "Your event microsite is now live.",
-        })
-<<<<<<< Updated upstream
-      } catch (error: any) {
-        toast({
-          title: "Error",
-          description: error.message || "Failed to publish event. Please try again.",
-          variant: "destructive",
-        })
-      } finally {
-        setIsPublishing(false)
-=======
-      } catch (error) {
-        console.error("Error publishing event:", error)
-        toast({
-          title: "Error",
-          description: error instanceof Error ? error.message : "Failed to publish event. Please try again.",
-          variant: "destructive",
-        })
-      } finally {
-        setIsLoading(false)
->>>>>>> Stashed changes
+
+        const createdEvent = await api.createEvent(eventDataForApi)
+
+        const updatedEvents = JSON.parse(localStorage.getItem("published_events") || "[]")
+        const eventIndex = updatedEvents.findIndex((e: any) => e.slug === slug)
+        if (eventIndex !== -1) {
+          updatedEvents[eventIndex].id = createdEvent._id
+          localStorage.setItem("published_events", JSON.stringify(updatedEvents))
+        }
+      } catch (apiError) {
+        console.warn("Backend API failed, event saved locally:", apiError)
       }
+
+      setManagementPassword(password)
+      setIsPublished(true)
+      toast({
+        title: "Event Published!",
+        description: "Your event microsite is now live.",
+      })
+    } catch (error) {
+      console.error("Error publishing event:", error)
+      toast({
+        title: "Error",
+        description: error instanceof Error ? error.message : "Failed to publish event. Please try again.",
+        variant: "destructive",
+      })
+    } finally {
+      setIsPublishing(false)
     }
   }
 
@@ -256,9 +192,7 @@ export default function PublishEventPage() {
       <div className="space-y-8">
         <div>
           <h1 className="text-3xl font-bold">Event Published Successfully!</h1>
-          <p className="text-muted-foreground">
-            Your event microsite is now live and ready to share.
-          </p>
+          <p className="text-muted-foreground">Your event microsite is now live and ready to share.</p>
         </div>
 
         <Card className="border-green-200 bg-green-50">
@@ -281,17 +215,9 @@ export default function PublishEventPage() {
             </CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">
-            <p className="text-sm text-muted-foreground">
-              Use this password to access the management panel
-            </p>
-            <div className="p-3 bg-white rounded-lg font-mono text-lg font-bold text-center">
-              {managementPassword}
-            </div>
-            <Button
-              variant="outline"
-              className="w-full"
-              onClick={() => copyToClipboard(managementPassword)}
-            >
+            <p className="text-sm text-muted-foreground">Use this password to access the management panel</p>
+            <div className="p-3 bg-white rounded-lg font-mono text-lg font-bold text-center">{managementPassword}</div>
+            <Button variant="outline" className="w-full" onClick={() => copyToClipboard(managementPassword)}>
               <Copy className="h-4 w-4 mr-2" />
               Copy Password
             </Button>
@@ -307,15 +233,9 @@ export default function PublishEventPage() {
               </CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
-              <div className="p-3 bg-muted rounded-lg break-all text-sm">
-                {publicUrl}
-              </div>
+              <div className="p-3 bg-muted rounded-lg break-all text-sm">{publicUrl}</div>
               <div className="flex gap-2">
-                <Button
-                  variant="outline"
-                  className="flex-1"
-                  onClick={() => copyToClipboard(publicUrl)}
-                >
+                <Button variant="outline" className="flex-1" onClick={() => copyToClipboard(publicUrl)}>
                   <Copy className="h-4 w-4 mr-2" />
                   Copy Link
                 </Button>
@@ -337,15 +257,9 @@ export default function PublishEventPage() {
               </CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
-              <div className="p-3 bg-muted rounded-lg break-all text-sm">
-                {manageUrl}
-              </div>
+              <div className="p-3 bg-muted rounded-lg break-all text-sm">{manageUrl}</div>
               <div className="flex gap-2">
-                <Button
-                  variant="outline"
-                  className="flex-1"
-                  onClick={() => copyToClipboard(manageUrl)}
-                >
+                <Button variant="outline" className="flex-1" onClick={() => copyToClipboard(manageUrl)}>
                   <Copy className="h-4 w-4 mr-2" />
                   Copy Link
                 </Button>
@@ -376,9 +290,7 @@ export default function PublishEventPage() {
     <div className="space-y-8">
       <div>
         <h1 className="text-3xl font-bold">Publish Your Event</h1>
-        <p className="text-muted-foreground">
-          Review and publish your event to generate the microsite.
-        </p>
+        <p className="text-muted-foreground">Review and publish your event to generate the microsite.</p>
       </div>
 
       <StepProgress steps={steps} currentStep={currentStepIndex} />
