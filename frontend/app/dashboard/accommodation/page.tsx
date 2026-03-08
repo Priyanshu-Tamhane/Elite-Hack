@@ -32,11 +32,7 @@ export default function AccommodationPage() {
   const loadEvents = async () => {
     try {
       const data = await api.getEvents()
-      // Filter events that have accommodation data
-      const eventsWithAccommodation = data.filter((event: any) => 
-        event.accommodation || event.inventory?.twinRooms || event.inventory?.suites || event.inventory?.bunkBeds
-      )
-      setEvents(eventsWithAccommodation)
+      setEvents(data)
     } catch (error: any) {
       toast({
         title: "Error",

@@ -6,7 +6,7 @@ const paymentSchema = new mongoose.Schema({
   participantName: { type: String, required: true },
   participantEmail: { type: String, required: true },
   amount: { type: Number, required: true },
-  currency: { type: String, default: 'USD' },
+  currency: { type: String, default: 'INR' },
   category: { type: String, required: true }, // 'Ticket', 'Accommodation', 'Workshop', etc.
   paymentMethod: { type: String }, // 'VISA', 'MASTERCARD', 'PAYPAL', 'BANK TRANSFER'
   status: { type: String, enum: ['Completed', 'Pending', 'Refunded', 'Failed'], default: 'Pending' },

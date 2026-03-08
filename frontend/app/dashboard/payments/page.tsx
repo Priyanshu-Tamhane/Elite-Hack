@@ -158,7 +158,7 @@ export default function PaymentsHistoryPage() {
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm text-muted-foreground">Total Revenue</p>
-                <p className="text-2xl font-bold">${eventStats.totalRevenue.toFixed(2)}</p>
+                <p className="text-2xl font-bold">₹{eventStats.totalRevenue.toFixed(2)}</p>
               </div>
               <div className="flex h-12 w-12 items-center justify-center rounded-lg bg-accent">
                 <DollarSign className="h-6 w-6 text-accent-foreground" />
@@ -171,7 +171,7 @@ export default function PaymentsHistoryPage() {
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm text-muted-foreground">Pending Payouts</p>
-                <p className="text-2xl font-bold">${eventStats.pendingPayouts.toFixed(2)}</p>
+                <p className="text-2xl font-bold">₹{eventStats.pendingPayouts.toFixed(2)}</p>
               </div>
               <div className="flex h-12 w-12 items-center justify-center rounded-lg bg-accent">
                 <Clock className="h-6 w-6 text-accent-foreground" />
@@ -184,7 +184,7 @@ export default function PaymentsHistoryPage() {
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm text-muted-foreground">Total Refunds</p>
-                <p className="text-2xl font-bold">${eventStats.totalRefunds.toFixed(2)}</p>
+                <p className="text-2xl font-bold">₹{eventStats.totalRefunds.toFixed(2)}</p>
               </div>
               <div className="flex h-12 w-12 items-center justify-center rounded-lg bg-accent">
                 <RefreshCcw className="h-6 w-6 text-accent-foreground" />
@@ -294,7 +294,7 @@ export default function PaymentsHistoryPage() {
                       </div>
                     </TableCell>
                     <TableCell className="font-medium">
-                      ${payment.amount.toFixed(2)} {payment.currency}
+                      ₹{payment.amount.toFixed(2)}
                     </TableCell>
                     <TableCell>
                       <Badge
@@ -327,14 +327,14 @@ export default function PaymentsHistoryPage() {
         </CardContent>
       </Card>
 
-      {/* Reconciliation Notice */}
+      {/* Info Notice */}
       <Card className="border-primary/20 bg-primary/5">
         <CardContent className="flex items-center gap-3 p-4">
           <Info className="h-5 w-5 text-primary" />
           <div>
-            <p className="font-medium">Payment Reconciliation</p>
+            <p className="font-medium">Payment Records</p>
             <p className="text-sm text-muted-foreground">
-              Payments are automatically reconciled every 24 hours. Last sync: {new Date().toLocaleString()}.
+              This is a prototype view showing payment transaction records for your events.
             </p>
           </div>
         </CardContent>
