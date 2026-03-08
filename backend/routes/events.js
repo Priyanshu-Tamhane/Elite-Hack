@@ -62,8 +62,10 @@ router.post('/:slug/register', async (req, res) => {
     event.registeredCount = event.participants.length;
     await event.save();
 
+    // Send email
     if (req.body.email && req.body.name) {
-      await sendRegistrationEmail(
+      console.log('Attempting to send email to:', req.body.email);
+      const emailResult = await sendRegistrationEmail(
         req.body.email,
         req.body.name,
         event.eventName,
@@ -74,10 +76,14 @@ router.post('/:slug/register', async (req, res) => {
           slug: event.slug
         }
       );
+      console.log('Email result:', emailResult);
+    } else {
+      console.log('Missing email or name:', { email: req.body.email, name: req.body.name });
     }
 
     res.status(201).json({ message: 'Registration successful', event });
   } catch (error) {
+    console.error('Registration error:', error);
     res.status(500).json({ message: error.message });
   }
 });

@@ -19,6 +19,16 @@ interface NavbarProps {
 }
 
 export function Navbar({ isLoggedIn = false, userRole = "organizer", userName = "Alex Rivera" }: NavbarProps) {
+  // Get initials from userName
+  const getInitials = (name: string) => {
+    return name
+      .split(' ')
+      .map(word => word[0])
+      .join('')
+      .toUpperCase()
+      .slice(0, 2)
+  }
+
   return (
     <header className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
       <div className="container mx-auto flex h-16 items-center justify-between px-4">
@@ -69,7 +79,7 @@ export function Navbar({ isLoggedIn = false, userRole = "organizer", userName = 
                     </div>
                     <Avatar className="h-8 w-8">
                       <AvatarImage src="/placeholder.svg?height=32&width=32" alt={userName} />
-                      <AvatarFallback>AR</AvatarFallback>
+                      <AvatarFallback>{getInitials(userName)}</AvatarFallback>
                     </Avatar>
                     <ChevronDown className="h-4 w-4 text-muted-foreground" />
                   </Button>

@@ -79,9 +79,25 @@ export function HackathonMicrosite({ event }: HackathonMicrositeProps) {
     }
   }, [trackList.length])
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
-    setSubmitted(true)
+    
+    try {
+      const response = await fetch(`http://localhost:5000/api/events/${slug}/register`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(form)
+      })
+      
+      if (response.ok) {
+        setSubmitted(true)
+      } else {
+        alert('Registration failed. Please try again.')
+      }
+    } catch (error) {
+      console.error('Registration error:', error)
+      alert('Registration failed. Please try again.')
+    }
   }
 
   const typeColor: Record<string, string> = {
@@ -453,16 +469,9 @@ export function HackathonMicrosite({ event }: HackathonMicrositeProps) {
               <div style={{ fontSize: 64, marginBottom: 20 }}>🎉</div>
               <h3 style={{ fontSize: 28, fontWeight: 800, color: "white", marginBottom: 12 }}>You&apos;re Registered!</h3>
               <p style={{ fontSize: 16, color: "#94A3B8", marginBottom: 24 }}>Welcome to <strong style={{ color: "#4ADE80" }}>{eventName}</strong>! We&apos;ve sent a confirmation to <strong>{form.email}</strong>. Get ready to build something amazing!</p>
-              <div style={{ display: "flex", gap: 16, justifyContent: "center", flexWrap: "wrap" }}>
-                <a href={`/event/${slug}/register`}>
-                  <button style={{ background: "rgba(34,197,94,0.2)", color: "#4ADE80", border: "1px solid rgba(34,197,94,0.3)", borderRadius: 10, padding: "10px 24px", fontWeight: 600, fontSize: 14, cursor: "pointer" }}>
-                    Full Registration Portal
-                  </button>
-                </a>
-                <button onClick={() => setSubmitted(false)} style={{ background: "transparent", color: "#64748B", border: "1px solid rgba(255,255,255,0.1)", borderRadius: 10, padding: "10px 24px", fontWeight: 600, fontSize: 14, cursor: "pointer" }}>
-                  Register Another
-                </button>
-              </div>
+              <button onClick={() => setSubmitted(false)} style={{ background: "linear-gradient(135deg,#7C3AED,#3B82F6)", color: "white", border: "none", borderRadius: 10, padding: "12px 32px", fontWeight: 600, fontSize: 14, cursor: "pointer" }}>
+                Register Another Participant
+              </button>
             </div>
           ) : (
             <form onSubmit={handleSubmit} style={{ background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.08)", borderRadius: 20, padding: "40px", display: "flex", flexDirection: "column", gap: 20 }}>

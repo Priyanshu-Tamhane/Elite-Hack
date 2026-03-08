@@ -43,7 +43,8 @@ export default function EventManageLoginPage() {
     setLoading(true)
 
     try {
-      if (event.adminPassword && password === event.adminPassword) {
+      if ((event.managementPassword && password === event.managementPassword) || 
+          (event.adminPassword && password === event.adminPassword)) {
         sessionStorage.setItem("event_admin", slug)
         
         toast({

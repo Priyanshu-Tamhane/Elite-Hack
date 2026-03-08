@@ -134,9 +134,9 @@ export default function EventsPage() {
           events.map((event: any) => (
           <Card key={event._id} className="overflow-hidden">
             <div className="relative aspect-video">
-              {event.bannerImage ? (
+              {(event.bannerImage || event.bannerUrl) ? (
                 <img
-                  src={event.bannerImage}
+                  src={event.bannerImage || event.bannerUrl}
                   alt={event.eventName}
                   className="object-cover w-full h-full"
                 />
@@ -182,11 +182,20 @@ export default function EventsPage() {
                         {event.registeredCount || 0} / {event.maxParticipants || 'Unlimited'} registrations
                       </span>
                     </div>
-                    {event.managementPassword && (
-                      <div className="flex items-center gap-2 text-amber-600">
-                        <span className="text-xs font-mono bg-amber-50 px-2 py-1 rounded border border-amber-200">
-                          Password: {event.managementPassword}
-                        </span>
+                    {(event.managementPassword || event.adminPassword) && (
+                      <div className="mt-2 p-2 bg-yellow-50 border border-yellow-200 rounded">
+                        <div className="flex items-center justify-between">
+                          <span className="text-xs font-semibold text-yellow-800">Management Password:</span>
+                          <button
+                            onClick={() => copyToClipboard(event.managementPassword || event.adminPassword)}
+                            className="text-xs text-yellow-600 hover:text-yellow-800 underline"
+                          >
+                            Copy
+                          </button>
+                        </div>
+                        <code className="text-sm font-mono font-bold text-yellow-900">
+                          {event.managementPassword || event.adminPassword}
+                        </code>
                       </div>
                     )}
                   </div>
@@ -205,7 +214,7 @@ export default function EventsPage() {
                       </Link>
                     </DropdownMenuItem>
                     <DropdownMenuItem asChild>
-                      <Link href={`/event/${event.slug}/manage`}>
+                      <Link href={`/event/${event.slug}/manage`} target="_blank">
                         <Edit className="mr-2 h-4 w-4" />
                         Manage Event
                       </Link>
@@ -226,7 +235,7 @@ export default function EventsPage() {
                   Category: <span className="font-medium text-foreground">{event.category}</span>
                 </span>
                 <Button variant="outline" size="sm" asChild>
-                  <Link href={`/event/${event.slug}/manage`}>
+                  <Link href={`/event/${event.slug}/manage`} target="_blank">
                     Manage
                   </Link>
                 </Button>

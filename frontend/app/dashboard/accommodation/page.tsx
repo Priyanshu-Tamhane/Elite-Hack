@@ -1,218 +1,304 @@
 "use client"
 
+import { useState, useEffect } from "react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Input } from "@/components/ui/input"
 import { Progress } from "@/components/ui/progress"
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
-import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs"
+import { api } from "@/lib/api"
+import { useToast } from "@/hooks/use-toast"
 import {
   Search,
-  Plus,
-  Filter,
   Users,
   Hotel,
   AlertCircle,
   Check,
-  ChevronDown,
-  Sparkles,
+  Calendar,
+  MapPin,
 } from "lucide-react"
-
-const stats = [
-  { label: "Total Capacity", value: "240", change: "+12 from last update", icon: Users },
-  { label: "Current Occupancy", value: "186", subtext: "77.5% total fill rate", icon: Hotel },
-  { label: "Available Slots", value: "54", subtext: "Across 18 empty rooms", icon: Check },
-  { label: "Unassigned Guests", value: "32", subtext: "Requires immediate attention", icon: AlertCircle, alert: true },
-]
-
-const rooms = [
-  { id: "401", name: "Suite 401", type: "Single Room", slots: 1, occupancy: 1, max: 1, status: "Full" },
-  { id: "202", name: "Standard 202", type: "Double Room", slots: 2, occupancy: 1, max: 2, status: "Partially Full" },
-  { id: "A", name: "Dorm Block A", type: "Dormitory Room", slots: 8, occupancy: 5, max: 8, status: "Partially Full" },
-  { id: "205", name: "Standard 205", type: "Double Room", slots: 2, occupancy: 0, max: 2, status: "Available" },
-  { id: "405", name: "Suite 405", type: "Single Room", slots: 1, occupancy: 0, max: 1, status: "Available" },
-  { id: "B", name: "Dorm Block B", type: "Dormitory Room", slots: 8, occupancy: 8, max: 8, status: "Full" },
-]
-
-const waitlistGuests = [
-  { name: "Sarah Chen", role: "Participant", avatar: "/placeholder.svg?height=32&width=32" },
-  { name: "James Wilson", role: "Speaker", avatar: "/placeholder.svg?height=32&width=32" },
-  { name: "Elena Rodriguez", role: "Participant", avatar: "/placeholder.svg?height=32&width=32" },
-  { name: "David Kim", role: "Volunteer", avatar: "/placeholder.svg?height=32&width=32" },
-  { name: "Amara Okafor", role: "Participant", avatar: "/placeholder.svg?height=32&width=32" },
-]
+import Link from "next/link"
 
 export default function AccommodationPage() {
+  const [events, setEvents] = useState<any[]>([])
+  const [loading, setLoading] = useState(true)
+  const { toast } = useToast()
+  const [searchQuery, setSearchQuery] = useState("")
+
+  useEffect(() => {
+    loadEvents()
+  }, [])
+
+  const loadEvents = async () => {
+    try {
+      const data = await api.getEvents()
+      // Filter events that have accommodation data
+      const eventsWithAccommodation = data.filter((event: any) => 
+        event.accommodation || event.inventory?.twinRooms || event.inventory?.suites || event.inventory?.bunkBeds
+      )
+      setEvents(eventsWithAccommodation)
+    } catch (error: any) {
+      toast({
+        title: "Error",
+        description: error.message,
+        variant: "destructive",
+      })
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  const calculateStats = () => {
+    let totalCapacity = 0
+    let totalOccupied = 0
+    let eventsWithAccommodation = 0
+
+    events.forEach(event => {
+      const twinRooms = event.accommodation?.twin_rooms || event.inventory?.twinRooms || 0
+      const suites = event.accommodation?.suites || event.inventory?.suites || 0
+      const bunkBeds = event.accommodation?.bunk_beds || event.inventory?.bunkBeds || 0
+      
+      const capacity = (twinRooms * 2) + suites + bunkBeds
+      totalCapacity += capacity
+      
+      // Count participants who need accommodation
+      const participantsNeedingAccommodation = event.participants?.filter((p: any) => 
+        p.needsAccommodation || p.accommodation
+      ).length || 0
+      
+      totalOccupied += participantsNeedingAccommodation
+      
+      if (capacity > 0) eventsWithAccommodation++
+    })
+
+    return {
+      totalCapacity,
+      totalOccupied,
+      available: totalCapacity - totalOccupied,
+      eventsWithAccommodation,
+      occupancyRate: totalCapacity > 0 ? Math.round((totalOccupied / totalCapacity) * 100) : 0
+    }
+  }
+
+  const stats = calculateStats()
+
+  const filteredEvents = events.filter(event => 
+    event.eventName.toLowerCase().includes(searchQuery.toLowerCase())
+  )
+
+  if (loading) return <div className="flex items-center justify-center min-h-screen">Loading...</div>
+
   return (
     <div className="space-y-6">
       {/* Header */}
       <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
         <div>
-          <h1 className="text-3xl font-bold">Accommodation</h1>
+          <h1 className="text-3xl font-bold">Accommodation Management</h1>
           <p className="text-muted-foreground">
-            Manage room inventory and guest allocations for TechSummit 2024.
+            Manage room inventory and guest allocations across all events.
           </p>
-        </div>
-        <div className="flex gap-3">
-          <Button variant="outline">
-            <Filter className="mr-2 h-4 w-4" />
-            Filters
-          </Button>
-          <Button>
-            <Plus className="mr-2 h-4 w-4" />
-            Add Room
-          </Button>
         </div>
       </div>
 
       {/* Stats */}
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-        {stats.map((stat) => (
-          <Card key={stat.label}>
-            <CardContent className="p-6">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm text-muted-foreground">{stat.label}</p>
-                  <p className="text-3xl font-bold">{stat.value}</p>
-                  <p className={`text-xs ${stat.alert ? "text-destructive" : "text-muted-foreground"}`}>
-                    {stat.subtext || stat.change}
-                  </p>
-                </div>
-                <div className={`flex h-10 w-10 items-center justify-center rounded-lg ${stat.alert ? "bg-destructive/10" : "bg-accent"}`}>
-                  <stat.icon className={`h-5 w-5 ${stat.alert ? "text-destructive" : "text-accent-foreground"}`} />
-                </div>
+        <Card>
+          <CardContent className="p-6">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm text-muted-foreground">Total Capacity</p>
+                <p className="text-3xl font-bold">{stats.totalCapacity}</p>
+                <p className="text-xs text-muted-foreground">Across all events</p>
               </div>
-            </CardContent>
-          </Card>
-        ))}
+              <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-accent">
+                <Hotel className="h-5 w-5 text-accent-foreground" />
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardContent className="p-6">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm text-muted-foreground">Current Occupancy</p>
+                <p className="text-3xl font-bold">{stats.totalOccupied}</p>
+                <p className="text-xs text-muted-foreground">{stats.occupancyRate}% fill rate</p>
+              </div>
+              <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-accent">
+                <Users className="h-5 w-5 text-accent-foreground" />
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardContent className="p-6">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm text-muted-foreground">Available Slots</p>
+                <p className="text-3xl font-bold">{stats.available}</p>
+                <p className="text-xs text-muted-foreground">Ready for booking</p>
+              </div>
+              <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-accent">
+                <Check className="h-5 w-5 text-accent-foreground" />
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardContent className="p-6">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm text-muted-foreground">Active Events</p>
+                <p className="text-3xl font-bold">{stats.eventsWithAccommodation}</p>
+                <p className="text-xs text-muted-foreground">With accommodation</p>
+              </div>
+              <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-accent">
+                <AlertCircle className="h-5 w-5 text-accent-foreground" />
+              </div>
+            </div>
+          </CardContent>
+        </Card>
       </div>
 
-      <div className="grid gap-6 lg:grid-cols-4">
-        {/* Room Grid */}
-        <div className="lg:col-span-3 space-y-4">
-          {/* Filters */}
-          <div className="flex flex-col gap-4 sm:flex-row sm:items-center">
-            <Tabs defaultValue="all">
-              <TabsList>
-                <TabsTrigger value="all">All Rooms</TabsTrigger>
-                <TabsTrigger value="suites">Suites</TabsTrigger>
-                <TabsTrigger value="standards">Standards</TabsTrigger>
-                <TabsTrigger value="dormitories">Dormitories</TabsTrigger>
-              </TabsList>
-            </Tabs>
-            <div className="relative flex-1 max-w-xs ml-auto">
-              <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-              <Input placeholder="Search room numbers..." className="pl-10" />
-            </div>
-          </div>
+      {/* Search */}
+      <div className="relative max-w-md">
+        <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+        <Input 
+          placeholder="Search events..." 
+          className="pl-10" 
+          value={searchQuery}
+          onChange={(e) => setSearchQuery(e.target.value)}
+        />
+      </div>
 
-          {/* Room Cards */}
-          <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-            {rooms.map((room) => (
-              <Card key={room.id}>
-                <CardContent className="p-4">
+      {/* Events List */}
+      <div className="space-y-4">
+        {filteredEvents.length === 0 ? (
+          <Card>
+            <CardContent className="p-12 text-center">
+              <Hotel className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
+              <h3 className="text-lg font-semibold mb-2">No Events with Accommodation</h3>
+              <p className="text-muted-foreground">Events with accommodation setup will appear here.</p>
+            </CardContent>
+          </Card>
+        ) : (
+          filteredEvents.map((event) => {
+            const twinRooms = event.accommodation?.twin_rooms || event.inventory?.twinRooms || 0
+            const suites = event.accommodation?.suites || event.inventory?.suites || 0
+            const bunkBeds = event.accommodation?.bunk_beds || event.inventory?.bunkBeds || 0
+            const totalCapacity = (twinRooms * 2) + suites + bunkBeds
+            
+            const participantsNeedingAccommodation = event.participants?.filter((p: any) => 
+              p.needsAccommodation || p.accommodation
+            ) || []
+            
+            const occupancyRate = totalCapacity > 0 
+              ? Math.round((participantsNeedingAccommodation.length / totalCapacity) * 100) 
+              : 0
+
+            return (
+              <Card key={event._id}>
+                <CardHeader>
                   <div className="flex items-start justify-between">
-                    <div className="flex items-center gap-2">
-                      <Hotel className="h-4 w-4 text-muted-foreground" />
-                      <span className="font-semibold">{room.name}</span>
+                    <div className="flex-1">
+                      <div className="flex items-center gap-3">
+                        <CardTitle className="text-xl">{event.eventName}</CardTitle>
+                        <Badge>{event.category}</Badge>
+                      </div>
+                      <div className="flex items-center gap-4 mt-2 text-sm text-muted-foreground">
+                        <span className="flex items-center gap-1">
+                          <Calendar className="h-4 w-4" />
+                          {new Date(event.startDate).toLocaleDateString()}
+                        </span>
+                        <span className="flex items-center gap-1">
+                          <MapPin className="h-4 w-4" />
+                          {event.venue}
+                        </span>
+                      </div>
                     </div>
-                    <Badge
-                      variant={
-                        room.status === "Full"
-                          ? "destructive"
-                          : room.status === "Available"
-                          ? "default"
-                          : "secondary"
-                      }
-                    >
-                      {room.status}
-                    </Badge>
-                  </div>
-                  <p className="mt-1 text-sm text-muted-foreground">
-                    {room.type} • {room.slots} Slots
-                  </p>
-                  <div className="mt-4 space-y-2">
-                    <div className="flex items-center justify-between text-sm">
-                      <span>Occupancy</span>
-                      <span>{room.occupancy} / {room.max}</span>
-                    </div>
-                    <Progress
-                      value={(room.occupancy / room.max) * 100}
-                      className={`h-2 ${room.occupancy === room.max ? "[&>div]:bg-destructive" : ""}`}
-                    />
-                  </div>
-                  <div className="mt-4 space-y-2">
-                    <Button variant="ghost" size="sm" className="w-full justify-between">
-                      View Assigned Guests ({room.occupancy})
-                      <ChevronDown className="h-4 w-4" />
+                    <Button variant="outline" size="sm" asChild>
+                      <Link href={`/event/${event.slug}/manage`} target="_blank">
+                        Manage Event
+                      </Link>
                     </Button>
-                    {room.occupancy < room.max && (
-                      <Button variant="outline" size="sm" className="w-full">
-                        <Users className="mr-2 h-4 w-4" />
-                        Quick Assign
-                      </Button>
-                    )}
+                  </div>
+                </CardHeader>
+                <CardContent>
+                  <div className="grid gap-6 md:grid-cols-2">
+                    {/* Room Inventory */}
+                    <div className="space-y-4">
+                      <h4 className="font-semibold text-sm">Room Inventory</h4>
+                      <div className="space-y-3">
+                        {twinRooms > 0 && (
+                          <div className="flex items-center justify-between p-3 bg-muted rounded-lg">
+                            <div>
+                              <p className="font-medium">Twin Rooms</p>
+                              <p className="text-xs text-muted-foreground">2 guests per room</p>
+                            </div>
+                            <Badge variant="outline">{twinRooms} rooms</Badge>
+                          </div>
+                        )}
+                        {suites > 0 && (
+                          <div className="flex items-center justify-between p-3 bg-muted rounded-lg">
+                            <div>
+                              <p className="font-medium">Suites</p>
+                              <p className="text-xs text-muted-foreground">Single occupancy</p>
+                            </div>
+                            <Badge variant="outline">{suites} rooms</Badge>
+                          </div>
+                        )}
+                        {bunkBeds > 0 && (
+                          <div className="flex items-center justify-between p-3 bg-muted rounded-lg">
+                            <div>
+                              <p className="font-medium">Bunk Beds</p>
+                              <p className="text-xs text-muted-foreground">Hostel style</p>
+                            </div>
+                            <Badge variant="outline">{bunkBeds} beds</Badge>
+                          </div>
+                        )}
+                      </div>
+                    </div>
+
+                    {/* Occupancy Stats */}
+                    <div className="space-y-4">
+                      <h4 className="font-semibold text-sm">Occupancy Status</h4>
+                      <div className="space-y-3">
+                        <div>
+                          <div className="flex items-center justify-between text-sm mb-2">
+                            <span>Total Capacity</span>
+                            <span className="font-medium">{totalCapacity} guests</span>
+                          </div>
+                          <div className="flex items-center justify-between text-sm mb-2">
+                            <span>Booked</span>
+                            <span className="font-medium">{participantsNeedingAccommodation.length} guests</span>
+                          </div>
+                          <Progress value={occupancyRate} className="h-2" />
+                          <p className="text-xs text-muted-foreground mt-1">{occupancyRate}% occupied</p>
+                        </div>
+                        
+                        {participantsNeedingAccommodation.length > 0 && (
+                          <div className="p-3 bg-blue-50 border border-blue-200 rounded-lg">
+                            <p className="text-sm font-medium text-blue-900">
+                              {participantsNeedingAccommodation.length} participants need accommodation
+                            </p>
+                            <Button variant="link" size="sm" className="h-auto p-0 text-blue-600" asChild>
+                              <Link href={`/event/${event.slug}/manage/accommodation`}>
+                                View Details →
+                              </Link>
+                            </Button>
+                          </div>
+                        )}
+                      </div>
+                    </div>
                   </div>
                 </CardContent>
               </Card>
-            ))}
-          </div>
-        </div>
-
-        {/* Unassigned Guests Sidebar */}
-        <div className="space-y-4">
-          <Card>
-            <CardHeader>
-              <div className="flex items-center justify-between">
-                <CardTitle>Unassigned Guests</CardTitle>
-                <ChevronDown className="h-4 w-4 text-muted-foreground" />
-              </div>
-              <p className="text-sm text-muted-foreground">Awaiting room allocation</p>
-            </CardHeader>
-            <CardContent className="space-y-1">
-              <div className="relative">
-                <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-                <Input placeholder="Search guests..." className="pl-10" />
-              </div>
-              <div className="mt-4 space-y-3">
-                {waitlistGuests.map((guest) => (
-                  <div
-                    key={guest.name}
-                    className="flex items-center justify-between rounded-lg border p-3"
-                  >
-                    <div className="flex items-center gap-3">
-                      <Avatar className="h-8 w-8">
-                        <AvatarImage src={guest.avatar} />
-                        <AvatarFallback>
-                          {guest.name.split(" ").map((n) => n[0]).join("")}
-                        </AvatarFallback>
-                      </Avatar>
-                      <div>
-                        <p className="text-sm font-medium">{guest.name}</p>
-                        <p className="text-xs text-muted-foreground">{guest.role}</p>
-                      </div>
-                    </div>
-                    <Badge variant="outline">Waitlist</Badge>
-                  </div>
-                ))}
-              </div>
-            </CardContent>
-          </Card>
-
-          <Card className="bg-accent/50">
-            <CardContent className="p-4">
-              <div className="flex items-center justify-between">
-                <span className="text-sm text-muted-foreground">Auto-assign availability</span>
-                <span className="text-sm font-medium">18% Rooms</span>
-              </div>
-              <Button className="mt-4 w-full">
-                <Sparkles className="mr-2 h-4 w-4" />
-                Run Auto-Allocator
-              </Button>
-            </CardContent>
-          </Card>
-        </div>
+            )
+          })
+        )}
       </div>
     </div>
   )
