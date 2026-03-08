@@ -49,7 +49,7 @@ export default function PublishEventPage() {
   const { toast } = useToast()
   const { eventData } = useEventCreation()
   const category = eventData?.category || ""
-  
+
   const isCorporateEvent = ['corporate event', 'conference', 'workshop'].includes((category || "").toLowerCase())
   const steps = isCorporateEvent ? stepsCorporate : stepsBasic
   const currentStepIndex = isCorporateEvent ? 4 : 3
@@ -88,90 +88,101 @@ export default function PublishEventPage() {
   }, [])
 
   const handlePublish = async () => {
-    const savedData = localStorage.getItem("event_draft_details")
-    const inventoryData = localStorage.getItem("event_draft_inventory")
-    
-    if (!savedData) return
+    const savedDetails = localStorage.getItem("event_draft_details")
+    const savedInventory = localStorage.getItem("event_draft_inventory")
+    const savedPayments = localStorage.getItem("event_draft_payments")
+
+    if (!savedDetails) {
+      toast({ title: "Missing details", description: "Please complete Step 1 first.", variant: "destructive" })
+      return
+    }
 
     setIsPublishing(true)
     try {
-      const data = JSON.parse(savedData)
-      const inventory = inventoryData ? JSON.parse(inventoryData) : {}
-
+      const data = JSON.parse(savedDetails)
+      const inventory = savedInventory ? JSON.parse(savedInventory) : {}
+      const payments = savedPayments ? JSON.parse(savedPayments) : {}
       const slug = generateSlug(data.eventName || "my-event")
       const password = generatePassword()
+      const isConference = data.category === "conference"
 
-      const publishedEvent = {
-        ...data,
+      const publishedEvent: Record<string, any> = {
+        eventName: data.eventName,
+        description: data.description || "No description provided",
+        category: data.category,
+        startDate: data.startDate,
+        endDate: data.endDate,
+        startTime: data.startTime,
+        venue: data.venue || "TBD",
+        bannerUrl: data.bannerUrl || "",
         slug,
-        adminPassword: password,
-        publishedAt: new Date().toISOString(),
         status: "published",
-        inventory: inventory || {}
+        adminPassword: password,
+        // Generic inventory fields
+        inventory: {
+          maxParticipants: inventory.totalCapacity,
+          teamSize: inventory.maxTeamSize,
+          twinRooms: inventory.accommodationSlots?.twin,
+          suites: inventory.accommodationSlots?.suite,
+          bunkBeds: inventory.accommodationSlots?.bunk,
+        },
+        rsvp_settings: { enabled: true, plus_one: true, max_guests: 5, meal_preference: true },
+        media: { hero_image: "", gallery: [] },
+        schedule: [],
+        accommodation: {
+          hotel_name: "",
+          twin_rooms: inventory.accommodationSlots?.twin || 0,
+          suites: inventory.accommodationSlots?.suite || 0,
+          bunk_beds: inventory.accommodationSlots?.bunk || 0,
+        },
+        contact: { name: "", phone: "", email: "" },
       }
 
-      const publishedEvents = JSON.parse(localStorage.getItem("published_events") || "[]")
-      publishedEvents.push(publishedEvent)
-      localStorage.setItem("published_events", JSON.stringify(publishedEvents))
+      // ── Conference-specific payload ──
+      if (isConference) {
+        publishedEvent.conferenceInfo = {
+          tagline: data.tagline || "",
+          eventMode: data.eventMode || "In-Person",
+          logo: data.logoUrl || "",
+        }
+        publishedEvent.registrationSettings = {
+          registrationType: payments.eventType || data.registrationType || "free",
+          deadline: data.registrationDeadline || null,
+          tickets: (inventory.tickets || []).map((t: any) => ({
+            type: t.type,
+            price: t.price ?? null,
+            currency: t.currency || "USD",
+            paperSubmission: t.paperSubmission || false,
+            benefits: t.benefits || [],
+            color: t.color || "indigo",
+          })),
+        }
+        // Agenda from details step
+        if (data.agenda?.length) {
+          publishedEvent.agenda = data.agenda.map((d: any, i: number) => ({
+            day: i + 1,
+            label: d.label || `Day ${i + 1}`,
+            date: d.date || "",
+            sessions: (d.sessions || []).filter((s: any) => s.title),
+          }))
+        }
+        publishedEvent.resources = data.resources || []
+      }
 
+      await api.createEvent(publishedEvent)
+
+      // Cleanup all draft keys
       localStorage.removeItem("event_draft_details")
       localStorage.removeItem("event_draft_inventory")
-
-      try {
-        const eventDataForApi: any = {
-          title: data.eventName,
-          description: data.description,
-          date: data.startDate ? new Date(data.startDate) : undefined,
-          location: data.venue,
-          category: data.category,
-          bannerUrl: data.bannerUrl,
-          maxParticipants: inventory.maxParticipants || 100,
-          status: "published",
-          adminPassword: password,
-          corporateDetails: {
-            companyMission: data.companyMission,
-            eventObjectives: data.eventObjectives
-              ? (Array.isArray(data.eventObjectives)
-                  ? data.eventObjectives
-                  : data.eventObjectives.split('\n').filter((s: string) => s.trim()))
-              : [],
-            targetAudience: data.targetAudience,
-            dressCode: data.dressCode,
-            parkingInfo: data.parkingInfo,
-            contactPerson: data.contactPerson,
-            contactEmail: data.contactEmail
-          },
-          branding: {
-            primaryColor: data.primaryColor || "#2563eb",
-            secondaryColor: data.secondaryColor || "#64748b",
-            logoUrl: data.logoUrl,
-            bannerUrl: data.bannerUrl
-          }
-        }
-
-        const createdEvent = await api.createEvent(eventDataForApi)
-
-        const updatedEvents = JSON.parse(localStorage.getItem("published_events") || "[]")
-        const eventIndex = updatedEvents.findIndex((e: any) => e.slug === slug)
-        if (eventIndex !== -1) {
-          updatedEvents[eventIndex].id = createdEvent._id
-          localStorage.setItem("published_events", JSON.stringify(updatedEvents))
-        }
-      } catch (apiError) {
-        console.warn("Backend API failed, event saved locally:", apiError)
-      }
+      localStorage.removeItem("event_draft_payments")
 
       setManagementPassword(password)
       setIsPublished(true)
-      toast({
-        title: "Event Published!",
-        description: "Your event microsite is now live.",
-      })
-    } catch (error) {
-      console.error("Error publishing event:", error)
+      toast({ title: "Event Published! 🎉", description: "Your event microsite is now live." })
+    } catch (error: any) {
       toast({
         title: "Error",
-        description: error instanceof Error ? error.message : "Failed to publish event. Please try again.",
+        description: error.message || "Failed to publish event. Please try again.",
         variant: "destructive",
       })
     } finally {

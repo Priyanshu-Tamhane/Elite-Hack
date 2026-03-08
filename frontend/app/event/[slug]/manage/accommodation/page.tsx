@@ -11,6 +11,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Input } from "@/components/ui/input"
 import { Hotel, Bed } from "lucide-react"
 import { useToast } from "@/hooks/use-toast"
+import { api } from "@/lib/api"
 
 export default function AccommodationManagementPage() {
   const params = useParams()
@@ -31,16 +32,28 @@ export default function AccommodationManagementPage() {
       return
     }
 
-    const publishedEvents = JSON.parse(localStorage.getItem("published_events") || "[]")
-    const foundEvent = publishedEvents.find((e: any) => e.slug === slug)
-    if (foundEvent) setEvent(foundEvent)
+    const loadData = async () => {
+      try {
+        const eventData = await api.getEventBySlug(slug)
+        setEvent(eventData)
+        const regs = await api.getRegistrations(slug)
+        setGuests(regs)
+        const roomAssigns = await api.getRoomAssignments(slug)
+        setAssignments(roomAssigns)
+      } catch {
+        const publishedEvents = JSON.parse(localStorage.getItem("published_events") || "[]")
+        const foundEvent = publishedEvents.find((e: any) => e.slug === slug)
+        if (foundEvent) setEvent(foundEvent)
 
-    const allRegistrations = JSON.parse(localStorage.getItem("event_registrations") || "[]")
-    const eventGuests = allRegistrations.filter((r: any) => r.eventSlug === slug)
-    setGuests(eventGuests)
+        const allRegistrations = JSON.parse(localStorage.getItem("event_registrations") || "[]")
+        const eventGuests = allRegistrations.filter((r: any) => r.eventSlug === slug)
+        setGuests(eventGuests)
 
-    const savedAssignments = JSON.parse(localStorage.getItem(`room_assignments_${slug}`) || "[]")
-    setAssignments(savedAssignments)
+        const savedAssignments = JSON.parse(localStorage.getItem(`room_assignments_${slug}`) || "[]")
+        setAssignments(savedAssignments)
+      }
+    }
+    loadData()
   }, [slug, router])
 
   const handleAssignRoom = () => {
@@ -58,7 +71,7 @@ export default function AccommodationManagementPage() {
     const updated = [...assignments, newAssignment]
     setAssignments(updated)
     localStorage.setItem(`room_assignments_${slug}`, JSON.stringify(updated))
-    
+
     toast({ title: "Room assigned successfully" })
     setSelectedGuest("")
     setRoomType("")

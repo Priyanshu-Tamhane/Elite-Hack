@@ -15,7 +15,7 @@ const eventSchema = new mongoose.Schema({
   managementPassword: { type: String },
   status: { type: String, enum: ['draft', 'published', 'cancelled'], default: 'draft' },
   organizerId: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true },
-  
+
   // Inventory
   inventory: {
     maxParticipants: { type: Number },
@@ -24,7 +24,7 @@ const eventSchema = new mongoose.Schema({
     suites: { type: Number },
     bunkBeds: { type: Number }
   },
-  
+
   // RSVP Settings
   rsvp_settings: {
     enabled: { type: Boolean, default: true },
@@ -32,14 +32,14 @@ const eventSchema = new mongoose.Schema({
     max_guests: { type: Number, default: 5 },
     meal_preference: { type: Boolean, default: true }
   },
-  
+
   // Media
   media: {
     hero_image: { type: String },
     gallery: [{ type: String }]
   },
-  
-  // Schedule
+
+  // Schedule (used by hackathon/wedding)
   schedule: [{
     id: String,
     name: String,
@@ -48,7 +48,7 @@ const eventSchema = new mongoose.Schema({
     time: String,
     venue: String
   }],
-  
+
   // Accommodation
   accommodation: {
     hotel_name: { type: String },
@@ -56,17 +56,17 @@ const eventSchema = new mongoose.Schema({
     suites: { type: Number },
     bunk_beds: { type: Number }
   },
-  
+
   // Contact
   contact: {
     name: { type: String },
     phone: { type: String },
     email: { type: String }
   },
-  
+
   // Admin credentials
   adminPassword: { type: String },
-  
+
   maxParticipants: { type: Number },
   registeredCount: { type: Number, default: 0 },
   participants: [{
@@ -75,43 +75,56 @@ const eventSchema = new mongoose.Schema({
     phone: String,
     registeredAt: { type: Date, default: Date.now }
   }],
-  
-  // Corporate-specific fields
-  corporateDetails: {
-    companyMission: { type: String },
-    eventObjectives: { type: [String], default: [] },
-    targetAudience: { type: String },
-    dressCode: { type: String },
-    parkingInfo: { type: String },
-    contactPerson: { type: String },
-    contactEmail: { type: String },
-    departmentAllocations: [{
-      department: String,
-      allocatedSeats: Number,
-      registeredCount: { type: Number, default: 0 }
-    }],
-    budget: {
-      totalBudget: Number,
-      cateringBudget: Number,
-      venueBudget: Number,
-      marketingBudget: Number
-    },
-    vendors: [{
-      name: String,
-      service: String,
-      contact: String,
-      cost: Number
+
+  // ─── CONFERENCE-SPECIFIC FIELDS ────────────────────────────────────
+
+  // Conference core info
+  conferenceInfo: {
+    tagline: { type: String },
+    eventMode: { type: String, enum: ['In-Person', 'Virtual', 'Hybrid'] },
+    logo: { type: String },
+  },
+
+  // Registration settings (conference)
+  registrationSettings: {
+    registrationType: { type: String, enum: ['free', 'paid'], default: 'free' },
+    maxAttendees: { type: Number },
+    deadline: { type: String },
+    tickets: [{
+      _id: { type: mongoose.Schema.Types.ObjectId, auto: true },
+      type: { type: String },   // "General", "Researcher", etc.
+      price: { type: Number },
+      currency: { type: String, default: 'USD' },
+      paperSubmission: { type: Boolean, default: false },
+      benefits: [{ type: String }],
+      color: { type: String },   // 'indigo' | 'cyan' | 'purple' | 'green'
     }]
   },
-  
-  // Branding
-  branding: {
-    primaryColor: { type: String, default: '#2563eb' },
-    secondaryColor: { type: String, default: '#64748b' },
-    logoUrl: { type: String },
-    bannerUrl: { type: String }
-  }
-  
+
+  // Multi-day agenda (conference)
+  agenda: [{
+    day: { type: Number },
+    label: { type: String },  // e.g. "Day 1 – Opening"
+    date: { type: String },
+    sessions: [{
+      _id: { type: mongoose.Schema.Types.ObjectId, auto: true },
+      title: { type: String },
+      speaker: { type: String },
+      startTime: { type: String },
+      endTime: { type: String },
+      room: { type: String },
+    }]
+  }],
+
+  // Downloadable resources (conference)
+  resources: [{
+    _id: { type: mongoose.Schema.Types.ObjectId, auto: true },
+    label: { type: String },
+    url: { type: String },
+    fileType: { type: String },   // 'pdf', 'docx', etc.
+  }],
+
 }, { timestamps: true });
 
 module.exports = mongoose.model('Event', eventSchema);
+
