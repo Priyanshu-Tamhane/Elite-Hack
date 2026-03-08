@@ -13,6 +13,7 @@ import { useEventCreation } from "@/lib/event-creation-context"
 import { WeddingInventory } from "@/components/inventory/WeddingInventory"
 import CorporateInventory from "@/components/inventory/CorporateInventory"
 import WorkshopInventory from "@/components/inventory/WorkshopInventory"
+import { FestivalInventory } from "@/components/inventory/FestivalInventory"
 import {
   Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
 } from "@/components/ui/select"
@@ -310,6 +311,7 @@ export default function CreateEventInventoryPage() {
   const isHackathon = category.toLowerCase() === "hackathon"
   const isConference = category.toLowerCase() === "conference"
   const isWedding = category.toLowerCase() === "wedding"
+  const isFestival = category.toLowerCase() === "festival"
   const isCorporateEvent = category.toLowerCase() === 'corporate event'
   
   const steps = isCorporateEvent ? stepsCorporate : stepsBasic
@@ -325,6 +327,7 @@ export default function CreateEventInventoryPage() {
   const [conferenceInventoryData, setConferenceInventoryData] = useState<any>({})
   const [corporateInventoryData, setCorporateInventoryData] = useState<any>({})
   const [workshopInventoryData, setWorkshopInventoryData] = useState<any>({})
+  const [festivalData, setFestivalData] = useState<any>({})
 
   // Hackathon state
   const [prizes, setPrizes] = useState({
@@ -448,6 +451,9 @@ export default function CreateEventInventoryPage() {
       })
     } else if (isWedding) {
       inventoryPayload = weddingData
+    } else if (isFestival) {
+      inventoryPayload = festivalData
+      updateEventData({ inventory: inventoryPayload })
     } else if (category.toLowerCase() === 'corporate event') {
       inventoryPayload = corporateInventoryData
       updateEventData({ inventory: inventoryPayload })
@@ -693,7 +699,10 @@ export default function CreateEventInventoryPage() {
           <WorkshopInventory onDataChange={setWorkshopInventoryData} />
         )}
 
-        {/* Festival support removed in this build (not used) */}
+        {/* ── Festival ── */}
+        {isFestival && (
+          <FestivalInventory onDataChange={setFestivalData} />
+        )}
 
         {/* ── Wedding ── */}
         {isWedding && (

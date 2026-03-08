@@ -3,7 +3,7 @@
 import Link from "next/link"
 import { Card, CardContent } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
-import { Calendar, Clock, Users } from "lucide-react"
+import { Calendar, Clock, Users, CheckCircle } from "lucide-react"
 
 interface WorkshopMicrositeProps {
   event: any
@@ -17,16 +17,16 @@ export default function WorkshopMicrosite({ event, onRegister }: WorkshopMicrosi
   return (
     <div className="min-h-screen bg-white">
       {/* Hero */}
-      <section className="relative py-24 bg-gradient-to-b from-emerald-50 to-white">
+      <section className="py-24 bg-gradient-to-b from-blue-50 to-white">
         <div className="container mx-auto px-4">
-          <div className="max-w-3xl mx-auto text-center">
-            <h1 className="text-4xl md:text-6xl font-extrabold mb-4 text-emerald-800">{event?.title}</h1>
-            <p className="text-base md:text-lg text-muted-foreground mb-8">{event?.description}</p>
+          <div className="max-w-4xl mx-auto text-center">
+            <h1 className="text-4xl md:text-6xl font-extrabold mb-3 text-slate-900">{event?.title}</h1>
+            <p className="text-base md:text-lg text-slate-600 mb-8">{event?.description}</p>
             <div className="flex justify-center gap-4">
-              <Button size="lg" className="bg-emerald-600 text-white shadow-lg hover:bg-emerald-700" onClick={onRegister}>
+              <Button size="lg" className="bg-emerald-600 text-white shadow-md hover:bg-emerald-700" onClick={onRegister}>
                 <Link href={`/event/${event?.slug || ""}/register`}>Register Now</Link>
               </Button>
-              <Button variant="outline" size="lg" className="border-emerald-200 text-emerald-700">
+              <Button variant="ghost" size="lg" className="border border-slate-200 text-slate-700">
                 <Link href={`#sessions`}>View Sessions</Link>
               </Button>
             </div>
@@ -34,61 +34,79 @@ export default function WorkshopMicrosite({ event, onRegister }: WorkshopMicrosi
         </div>
       </section>
 
-      {/* Info Cards */}
-      <section className="py-12">
-        <div className="container mx-auto px-4 max-w-4xl">
-          <div className="grid md:grid-cols-3 gap-6 mb-8">
-            <Card>
-              <CardContent className="text-center">
-                <Calendar className="h-6 w-6 mx-auto mb-2 text-primary" />
-                <p className="font-semibold">Date</p>
-                <p className="text-sm text-muted-foreground">{event?.startDate || "TBD"}</p>
-              </CardContent>
-            </Card>
+      {/* Summary / Info cards */}
+      <section className="py-12 bg-white">
+        <div className="container mx-auto px-4 max-w-5xl">
+          <div className="grid md:grid-cols-3 gap-6 mb-10">
+            <div className="rounded-xl bg-white p-6 shadow-sm border">
+              <div className="flex items-center gap-4">
+                <div className="bg-white/80 rounded-full p-3 border">
+                  <Calendar className="h-6 w-6 text-blue-600" />
+                </div>
+                <div>
+                  <p className="text-sm font-semibold text-slate-700">Date</p>
+                  <p className="mt-1 text-sm text-slate-500">{event?.startDate || "TBD"}</p>
+                </div>
+              </div>
+            </div>
 
-            <Card>
-              <CardContent className="text-center">
-                <Clock className="h-6 w-6 mx-auto mb-2 text-primary" />
-                <p className="font-semibold">Time</p>
-                <p className="text-sm text-muted-foreground">{event?.startTime || "TBD"}</p>
-              </CardContent>
-            </Card>
+            <div className="rounded-xl bg-white p-6 shadow-sm border">
+              <div className="flex items-center gap-4">
+                <div className="bg-white/80 rounded-full p-3 border">
+                  <Clock className="h-6 w-6 text-blue-600" />
+                </div>
+                <div>
+                  <p className="text-sm font-semibold text-slate-700">Time</p>
+                  <p className="mt-1 text-sm text-slate-500">{event?.startTime || "TBD"}</p>
+                </div>
+              </div>
+            </div>
 
-            <Card>
-              <CardContent className="text-center">
-                <Users className="h-6 w-6 mx-auto mb-2 text-primary" />
-                <p className="font-semibold">Seats</p>
-                <p className="text-sm text-muted-foreground">{event?.maxParticipants ?? "—"}</p>
-              </CardContent>
-            </Card>
+            <div className="rounded-xl bg-white p-6 shadow-sm border">
+              <div className="flex items-center gap-4">
+                <div className="bg-white/80 rounded-full p-3 border">
+                  <Users className="h-6 w-6 text-blue-600" />
+                </div>
+                <div>
+                  <p className="text-sm font-semibold text-slate-700">Seats</p>
+                  <p className="mt-1 text-sm text-slate-500">{event?.maxParticipants ?? "—"}</p>
+                </div>
+              </div>
+            </div>
           </div>
 
-          {/* Sessions */}
+          {/* Sessions / Agenda */}
           <div id="sessions">
-            <h2 className="text-2xl font-bold mb-4">Sessions & Instructors</h2>
+            <h2 className="text-3xl font-bold mb-4 text-slate-900">Sessions & Instructors</h2>
             <div className="space-y-4">
               {sessions.map((s: any, idx: number) => (
-                <Card key={idx}>
-                  <CardContent>
-                    <div className="flex items-center justify-between">
-                      <div>
-                        <h3 className="font-semibold">{s.title}</h3>
-                        <p className="text-sm text-muted-foreground">Instructor: {s.instructor}</p>
+                <div key={idx} className="rounded-xl border bg-white p-4 shadow-sm flex items-center justify-between">
+                  <div className="flex items-center gap-4">
+                    <div className="flex flex-col items-start">
+                      <div className="rounded-full bg-blue-50 p-3">
+                        <Clock className="h-5 w-5 text-blue-600" />
                       </div>
-                      <div className="text-sm text-muted-foreground">{s.time || ""}</div>
                     </div>
-                  </CardContent>
-                </Card>
+                    <div>
+                      <h3 className="font-semibold text-slate-800">{s.title}</h3>
+                      <p className="text-sm text-slate-500">Instructor: {s.instructor}</p>
+                    </div>
+                  </div>
+                  <div className="text-sm text-slate-500">{s.time || ""}</div>
+                </div>
               ))}
             </div>
           </div>
 
           {/* Materials */}
-          <div className="mt-8">
-            <h2 className="text-2xl font-bold mb-3">Materials</h2>
-            <div className="text-muted-foreground">
+          <div className="mt-10">
+            <h2 className="text-3xl font-bold mb-3 text-slate-900">Materials</h2>
+            <div className="grid gap-3">
               {materials.map((m: string, i: number) => (
-                <div key={i} className="mb-1">• {m}</div>
+                <div key={i} className="flex items-start gap-3 rounded-lg border p-4 bg-white">
+                  <div className="mt-1 text-green-600"><CheckCircle className="h-5 w-5" /></div>
+                  <div className="text-slate-600">{m || "—"}</div>
+                </div>
               ))}
             </div>
           </div>
@@ -96,11 +114,11 @@ export default function WorkshopMicrosite({ event, onRegister }: WorkshopMicrosi
       </section>
 
       {/* CTA */}
-      <section className="py-12 bg-muted/20">
+      <section className="py-16 bg-blue-50">
         <div className="container mx-auto px-4 max-w-4xl text-center">
-          <h3 className="text-xl font-semibold mb-3">Want to Attend?</h3>
-          <p className="text-muted-foreground mb-4">Register now — seats are limited for this hands-on workshop.</p>
-          <Button asChild>
+          <h3 className="text-2xl font-semibold mb-2 text-slate-900">Want to Attend?</h3>
+          <p className="text-slate-600 mb-6">Register now — seats are limited for this hands-on workshop.</p>
+          <Button size="lg" className="bg-emerald-600 text-white shadow-md hover:bg-emerald-700">
             <Link href={`/event/${event?.slug || ""}/register`}>Register</Link>
           </Button>
         </div>
