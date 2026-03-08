@@ -113,6 +113,7 @@ export default function PublishEventPage() {
       const slug = generateSlug(data.eventName || "my-event")
       const password = generatePassword()
       const isConference = data.category === "conference"
+      const isFestival = data.category === "festival"
 
       const publishedEvent: Record<string, any> = {
         eventName: data.eventName,
@@ -203,6 +204,12 @@ export default function PublishEventPage() {
           }))
         }
         publishedEvent.resources = data.resources || []
+      }
+
+      // ── Festival-specific payload ──
+      if (isFestival) {
+        publishedEvent.festival = inventory
+        publishedEvent.schedule = inventory.sub_events || []
       }
 
       // Always persist a local published copy so the microsite and management URL work locally

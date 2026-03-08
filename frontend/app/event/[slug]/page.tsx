@@ -5,6 +5,7 @@ import { useParams } from "next/navigation"
 import { HackathonMicrosite } from "@/components/microsites/HackathonMicrosite"
 import { WeddingMicrosite } from "@/components/microsites/WeddingMicrosite"
 import { DefaultMicrosite } from "@/components/microsites/DefaultMicrosite"
+import { FestivalMicrosite } from "@/components/microsites/FestivalMicrosite"
 import { api } from "@/lib/api"
 
 // Lazy-load the conference microsite for better performance
@@ -57,6 +58,7 @@ export default function EventMicrositePage() {
 
   if (event.category === "hackathon") return <HackathonMicrosite event={event} />
   if (event.category === "wedding") return <WeddingMicrosite event={event} />
+  if (event.category === "festival") return <FestivalMicrosite event={event} />
   if (event.category === "conference") {
     return (
       <Suspense fallback={<LoadingScreen />}>
