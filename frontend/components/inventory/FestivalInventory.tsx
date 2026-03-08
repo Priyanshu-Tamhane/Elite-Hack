@@ -17,7 +17,7 @@ interface FestivalInventoryProps {
 export function FestivalInventory({ onDataChange }: FestivalInventoryProps) {
   const [capacity, setCapacity] = useState("5000")
   const [waitlist, setWaitlist] = useState("200")
-  const [tickets, setTickets] = useState([{ id: 1, name: "General Pass", price: "299", quantity: "2000", description: "" }])
+  const [tickets, setTickets] = useState([{ id: 1, name: "", price: "", quantity: "", description: "" }])
   const [stages, setStages] = useState([{ id: 1, name: "Main Stage", location: "Central Ground", capacity: "2000" }])
   const [subEvents, setSubEvents] = useState([{ id: 1, name: "", category: "Music", description: "", date: "", time: "", stage: "", maxParticipants: "", prizePool: "" }])
   const [artists, setArtists] = useState([{ id: 1, name: "", type: "Live DJ", date: "", time: "", stage: "" }])

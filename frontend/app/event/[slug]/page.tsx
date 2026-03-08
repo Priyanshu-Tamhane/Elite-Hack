@@ -34,11 +34,26 @@ export default function EventMicrositePage() {
   useEffect(() => {
     const loadEvent = async () => {
       try {
+        // Try to fetch from backend first
         const data = await api.getEventBySlug(slug)
         setEvent(data)
+        setLoading(false)
       } catch (error) {
-        console.error("Failed to load event", error)
-      } finally {
+        console.log("Backend fetch failed, trying localStorage...")
+        // Fallback to localStorage if backend fails
+        try {
+          const publishedEvents = JSON.parse(localStorage.getItem('published_events') || '[]')
+          console.log('Published events in localStorage:', publishedEvents)
+          const localEvent = publishedEvents.find((e: any) => e.slug === slug)
+          if (localEvent) {
+            console.log('Found event in localStorage:', localEvent.eventName)
+            setEvent(localEvent)
+          } else {
+            console.error("Event not found in localStorage. Looking for slug:", slug)
+          }
+        } catch (localError) {
+          console.error("Failed to parse localStorage", localError)
+        }
         setLoading(false)
       }
     }
@@ -58,14 +73,22 @@ export default function EventMicrositePage() {
     )
   }
 
-  const category = event.category?.toLowerCase()
+  const category = event.category?.toLowerCase().trim()
   console.log('Event category:', event.category, '| Normalized:', category)
 
   if (category === "hackathon") return <HackathonMicrosite event={event} />
   if (category === "wedding") return <WeddingMicrosite event={event} />
   if (category === "festival") return <FestivalMicrosite event={event} />
   if (category === "workshop") return <WorkshopMicrosite event={event} />
-  if (category === "corporate event") return <CorporateMicrosite event={event} />
+  if (category === "corporate event") {
+    const handleRegister = () => {
+      const registerSection = document.getElementById('register-section')
+      if (registerSection) {
+        registerSection.scrollIntoView({ behavior: 'smooth' })
+      }
+    }
+    return <CorporateMicrosite event={event} onRegister={handleRegister} />
+  }
   if (category === "conference") {
     return (
       <Suspense fallback={<LoadingScreen />}>

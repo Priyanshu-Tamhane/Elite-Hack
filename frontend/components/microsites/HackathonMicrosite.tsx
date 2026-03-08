@@ -207,7 +207,7 @@ export function HackathonMicrosite({ event }: HackathonMicrositeProps) {
           <div style={{ display: "flex", gap: 32, justifyContent: "center", marginTop: 52, flexWrap: "wrap" }}>
             {[
               { icon: <Users style={{ width: 16, height: 16 }} />, label: "500+ Hackers" },
-              { icon: <Trophy style={{ width: 16, height: 16 }} />, label: "$10,000 in Prizes" },
+              { icon: <Trophy style={{ width: 16, height: 16 }} />, label: prizes?.first?.amount ? `₹${Number(prizes.first.amount) + Number(prizes.second?.amount || 0) + Number(prizes.third?.amount || 0)} in Prizes` : "Prize Pool" },
               { icon: <Clock style={{ width: 16, height: 16 }} />, label: "48 Hours" },
               { icon: <MapPin style={{ width: 16, height: 16 }} />, label: venue },
             ].map(({ icon, label }) => (
@@ -288,30 +288,30 @@ export function HackathonMicrosite({ event }: HackathonMicrositeProps) {
           <div style={{ background: "linear-gradient(180deg,rgba(148,163,184,0.12) 0%,rgba(148,163,184,0.04) 100%)", border: "1px solid rgba(148,163,184,0.25)", borderRadius: 20, padding: "36px 24px", textAlign: "center" }}>
             <div style={{ fontSize: 40, marginBottom: 12 }}>🥈</div>
             <h3 style={{ fontSize: 20, fontWeight: 800, color: "white", marginBottom: 8 }}>2nd Place</h3>
-            <p style={{ fontSize: 36, fontWeight: 900, color: "#94A3B8", marginBottom: 16 }}>${prizes?.second?.amount || "3,000"}</p>
-            <div style={{ fontSize: 13, color: "#64748B" }}>{prizes?.second?.perks || "Cloud Credits + Certificates"}</div>
+            <p style={{ fontSize: 36, fontWeight: 900, color: "#94A3B8", marginBottom: 16 }}>₹{prizes?.second?.amount || "0"}</p>
+            <div style={{ fontSize: 13, color: "#64748B" }}>{prizes?.second?.perks || ""}</div>
           </div>
           {/* 1st */}
           <div style={{ background: "linear-gradient(180deg,rgba(234,179,8,0.2) 0%,rgba(234,179,8,0.05) 100%)", border: "1px solid rgba(234,179,8,0.4)", borderRadius: 24, padding: "48px 28px", textAlign: "center", boxShadow: "0 0 60px rgba(234,179,8,0.15)" }}>
             <div style={{ fontSize: 52, marginBottom: 12 }}>🏆</div>
             <div style={{ background: "rgba(234,179,8,0.2)", borderRadius: 999, padding: "3px 12px", display: "inline-block", fontSize: 11, fontWeight: 700, color: "#EAB308", marginBottom: 12 }}>GRAND PRIZE</div>
             <h3 style={{ fontSize: 24, fontWeight: 900, color: "white", marginBottom: 10 }}>1st Place</h3>
-            <p style={{ fontSize: 44, fontWeight: 900, color: "#EAB308", marginBottom: 16 }}>${prizes?.first?.amount || "5,000"}</p>
-            <div style={{ fontSize: 13, color: "#94A3B8" }}>{prizes?.first?.perks || "VC Meetings + Premium Swag + Internship"}</div>
+            <p style={{ fontSize: 44, fontWeight: 900, color: "#EAB308", marginBottom: 16 }}>₹{prizes?.first?.amount || "0"}</p>
+            <div style={{ fontSize: 13, color: "#94A3B8" }}>{prizes?.first?.perks || ""}</div>
           </div>
           {/* 3rd */}
           <div style={{ background: "linear-gradient(180deg,rgba(249,115,22,0.12) 0%,rgba(249,115,22,0.04) 100%)", border: "1px solid rgba(249,115,22,0.25)", borderRadius: 20, padding: "36px 24px", textAlign: "center" }}>
             <div style={{ fontSize: 40, marginBottom: 12 }}>🥉</div>
             <h3 style={{ fontSize: 20, fontWeight: 800, color: "white", marginBottom: 8 }}>3rd Place</h3>
-            <p style={{ fontSize: 36, fontWeight: 900, color: "#FB923C", marginBottom: 16 }}>${prizes?.third?.amount || "1,000"}</p>
-            <div style={{ fontSize: 13, color: "#64748B" }}>{prizes?.third?.perks || "Certificates + Goodies"}</div>
+            <p style={{ fontSize: 36, fontWeight: 900, color: "#FB923C", marginBottom: 16 }}>₹{prizes?.third?.amount || "0"}</p>
+            <div style={{ fontSize: 13, color: "#64748B" }}>{prizes?.third?.perks || ""}</div>
           </div>
         </div>
         {/* Special prizes — dynamic */}
         <div style={{ display: "flex", gap: 16, justifyContent: "center", marginTop: 28, flexWrap: "wrap" }}>
           {(prizes?.special?.length ? prizes.special : []).map((sp: any, i: number) => (
             <div key={i} style={{ background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.08)", borderRadius: 10, padding: "10px 18px", fontSize: 13, color: "#94A3B8" }}>
-              🎖 {sp.title}{sp.amount ? ` · $${sp.amount}` : ""}
+              🎖 {sp.title}{sp.amount ? ` · ₹${sp.amount}` : ""}
             </div>
           ))}
         </div>

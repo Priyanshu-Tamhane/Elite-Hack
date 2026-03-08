@@ -159,7 +159,7 @@ export function HackathonInventory({ onDataChange }: HackathonInventoryProps) {
               <div key={place} className="rounded-xl border-2 p-4 space-y-3">
                 <p className="font-bold">{place === "first" ? "🥇 1st" : place === "second" ? "🥈 2nd" : "🥉 3rd"} Place</p>
                 <div className="flex items-center border rounded-lg overflow-hidden">
-                  <span className="px-2 text-sm bg-muted border-r">$</span>
+                  <span className="px-2 text-sm bg-muted border-r">₹</span>
                   <Input type="number" value={prizes[place].amount} onChange={e => setPrizes({ ...prizes, [place]: { ...prizes[place], amount: e.target.value } })} className="border-0" placeholder="0" />
                 </div>
                 <Textarea placeholder="Perks" value={prizes[place].perks} onChange={e => setPrizes({ ...prizes, [place]: { ...prizes[place], perks: e.target.value } })} className="min-h-[70px]" />
@@ -178,7 +178,7 @@ export function HackathonInventory({ onDataChange }: HackathonInventoryProps) {
                 <div key={i} className="flex gap-3 items-center">
                   <Input placeholder="Prize Title" value={sp.title} onChange={e => updateSpecialPrize(i, "title", e.target.value)} className="flex-1" />
                   <div className="flex items-center border rounded-lg overflow-hidden w-36">
-                    <span className="px-2 text-sm bg-muted border-r">$</span>
+                    <span className="px-2 text-sm bg-muted border-r">₹</span>
                     <Input type="number" placeholder="500" value={sp.amount} onChange={e => updateSpecialPrize(i, "amount", e.target.value)} className="border-0 w-24" />
                   </div>
                   <Button variant="ghost" size="icon" onClick={() => removeSpecialPrize(i)}>

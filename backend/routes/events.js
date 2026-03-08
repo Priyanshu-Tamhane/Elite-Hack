@@ -1,7 +1,5 @@
 const express = require('express');
 const Event = require('../models/Event');
-const Registration = require('../models/Registration');
-const RoomAssignment = require('../models/RoomAssignment');
 const Notification = require('../models/Notification');
 const auth = require('../middleware/auth');
 const { sendRegistrationEmail } = require('../utils/emailService');
@@ -132,12 +130,15 @@ router.delete('/:id', auth, async (req, res) => {
   }
 });
 
-// ===== REGISTRATIONS =====
+// ===== REGISTRATIONS (stored in Event.participants) =====
 
 router.get('/:slug/registrations', async (req, res) => {
   try {
-    const registrations = await Registration.find({ eventSlug: req.params.slug }).sort({ registeredAt: -1 });
-    res.json(registrations);
+    const event = await Event.findOne({ slug: req.params.slug });
+    if (!event) {
+      return res.status(404).json({ message: 'Event not found' });
+    }
+    res.json(event.participants || []);
   } catch (error) {
     res.status(500).json({ message: error.message });
   }
@@ -150,41 +151,27 @@ router.post('/:slug/registrations', async (req, res) => {
       return res.status(404).json({ message: 'Event not found' });
     }
 
-    // Auto-confirm for conference & hackathon events
-    const autoConfirmCategories = ['conference', 'hackathon', 'workshop'];
-    const status = autoConfirmCategories.includes(event.category)
-      ? 'confirmed'
-      : (req.body.status || 'pending');
-
-    const registration = new Registration({
-      ...req.body,
-      status,
-      eventId: event._id,
-      eventSlug: req.params.slug,
-    });
-    await registration.save();
-    res.status(201).json(registration);
-  } catch (error) {
-    res.status(500).json({ message: error.message });
-  }
-});
-
-// Update registration status (confirm / decline / pending)
-router.patch('/:slug/registrations/:id', async (req, res) => {
-  try {
-    const { status } = req.body;
-    if (!['pending', 'confirmed', 'declined'].includes(status)) {
-      return res.status(400).json({ message: 'Invalid status. Use: pending, confirmed, or declined' });
+    event.participants.push(req.body);
+    event.registeredCount = event.participants.length;
+    await event.save();
+    
+    // Send confirmation email
+    if (req.body.email && req.body.name) {
+      console.log('Sending confirmation email to:', req.body.email);
+      await sendRegistrationEmail(
+        req.body.email,
+        req.body.name,
+        event.eventName,
+        {
+          startDate: event.startDate,
+          venue: event.venue,
+          startTime: event.startTime,
+          slug: event.slug
+        }
+      );
     }
-    const registration = await Registration.findByIdAndUpdate(
-      req.params.id,
-      { status },
-      { new: true }
-    );
-    if (!registration) {
-      return res.status(404).json({ message: 'Registration not found' });
-    }
-    res.json(registration);
+    
+    res.status(201).json({ message: 'Registration successful' });
   } catch (error) {
     res.status(500).json({ message: error.message });
   }
@@ -192,42 +179,16 @@ router.patch('/:slug/registrations/:id', async (req, res) => {
 
 router.delete('/:slug/registrations/:id', async (req, res) => {
   try {
-    await Registration.findByIdAndDelete(req.params.id);
-    res.json({ message: 'Registration deleted' });
-  } catch (error) {
-    res.status(500).json({ message: error.message });
-  }
-});
-
-// ===== ROOM ASSIGNMENTS =====
-
-router.get('/:slug/room-assignments', async (req, res) => {
-  try {
-    const assignments = await RoomAssignment.find({ eventSlug: req.params.slug });
-    res.json(assignments);
-  } catch (error) {
-    res.status(500).json({ message: error.message });
-  }
-});
-
-router.post('/:slug/room-assignments', async (req, res) => {
-  try {
     const event = await Event.findOne({ slug: req.params.slug });
     if (!event) {
       return res.status(404).json({ message: 'Event not found' });
     }
-    const assignment = new RoomAssignment({ ...req.body, eventId: event._id, eventSlug: req.params.slug });
-    await assignment.save();
-    res.status(201).json(assignment);
-  } catch (error) {
-    res.status(500).json({ message: error.message });
-  }
-});
-
-router.delete('/:slug/room-assignments/:guestId', async (req, res) => {
-  try {
-    await RoomAssignment.findOneAndDelete({ eventSlug: req.params.slug, guestId: req.params.guestId });
-    res.json({ message: 'Assignment deleted' });
+    
+    event.participants = event.participants.filter(p => p._id.toString() !== req.params.id);
+    event.registeredCount = event.participants.length;
+    await event.save();
+    
+    res.json({ message: 'Registration deleted' });
   } catch (error) {
     res.status(500).json({ message: error.message });
   }
@@ -237,7 +198,11 @@ router.delete('/:slug/room-assignments/:guestId', async (req, res) => {
 
 router.get('/:slug/notifications', async (req, res) => {
   try {
-    const notifications = await Notification.find({ eventSlug: req.params.slug }).sort({ sentAt: -1 });
+    const event = await Event.findOne({ slug: req.params.slug });
+    if (!event) {
+      return res.status(404).json({ message: 'Event not found' });
+    }
+    const notifications = await Notification.find({ eventId: event._id }).sort({ createdAt: -1 });
     res.json(notifications);
   } catch (error) {
     res.status(500).json({ message: error.message });
@@ -250,7 +215,7 @@ router.post('/:slug/notifications', async (req, res) => {
     if (!event) {
       return res.status(404).json({ message: 'Event not found' });
     }
-    const notification = new Notification({ ...req.body, eventId: event._id, eventSlug: req.params.slug });
+    const notification = new Notification({ ...req.body, eventId: event._id });
     await notification.save();
     res.status(201).json(notification);
   } catch (error) {

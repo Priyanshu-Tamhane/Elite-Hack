@@ -4,7 +4,6 @@ import { useState, useEffect } from "react"
 import Link from "next/link"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { StatsCard } from "@/components/stats-card"
 import { api } from "@/lib/api"
 import { useAuth } from "@/lib/auth-context"
@@ -17,12 +16,6 @@ import {
   ExternalLink,
   FileText,
   ArrowRight,
-  TrendingUp,
-  UserCheck,
-  Send,
-  Clock,
-  BarChart2,
-  Trophy,
 } from "lucide-react"
 import {
   LineChart,
@@ -34,20 +27,11 @@ import {
   ResponsiveContainer,
 } from "recharts"
 
-const chartData = [
-  { name: "01 May", registrations: 40 },
-  { name: "05 May", registrations: 65 },
-  { name: "10 May", registrations: 85 },
-  { name: "15 May", registrations: 120 },
-  { name: "20 May", registrations: 180 },
-  { name: "25 May", registrations: 240 },
-  { name: "30 May", registrations: 320 },
-]
-
 export default function OrganizerDashboard() {
   const { user } = useAuth()
   const [events, setEvents] = useState([])
-  const [stats, setStats] = useState({ total: 0, registrations: 0, slots: 0 })
+  const [stats, setStats] = useState({ total: 0, registrations: 0, slots: 0, revenue: 0 })
+  const [chartData, setChartData] = useState<any[]>([])
 
   useEffect(() => {
     loadData()
@@ -55,16 +39,47 @@ export default function OrganizerDashboard() {
 
   const loadData = async () => {
     try {
-      const data = await api.getEvents()
-      setEvents(data)
-      const total = data.length
-      const registrations = data.reduce((sum: number, e: any) => sum + (e.registeredCount || 0), 0)
-      const slots = data.reduce((sum: number, e: any) => sum + (e.maxParticipants || 0), 0) - registrations
-      setStats({ total, registrations, slots })
+      const [eventsData, paymentStats] = await Promise.all([
+        api.getEvents(),
+        api.getPaymentStats().catch(() => ({ totalRevenue: 0 }))
+      ])
+      
+      setEvents(eventsData)
+      const total = eventsData.length
+      const registrations = eventsData.reduce((sum: number, e: any) => sum + (e.registeredCount || 0), 0)
+      const maxCapacity = eventsData.reduce((sum: number, e: any) => sum + (e.maxParticipants || 0), 0)
+      const slots = maxCapacity > 0 ? maxCapacity - registrations : 0
+      
+      setStats({ total, registrations, slots, revenue: paymentStats.totalRevenue })
+      
+      // Generate chart data from events
+      const last7Days = Array.from({ length: 7 }, (_, i) => {
+        const date = new Date()
+        date.setDate(date.getDate() - (6 - i))
+        return date
+      })
+      
+      const chartDataGenerated = last7Days.map(date => {
+        const dayRegistrations = eventsData.reduce((sum: number, event: any) => {
+          const eventRegistrations = event.participants?.filter((p: any) => {
+            const regDate = new Date(p.registeredAt)
+            return regDate.toDateString() === date.toDateString()
+          }).length || 0
+          return sum + eventRegistrations
+        }, 0)
+        
+        return {
+          name: date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' }),
+          registrations: dayRegistrations
+        }
+      })
+      
+      setChartData(chartDataGenerated)
     } catch (error) {
       console.error(error)
     }
   }
+  
   return (
     <div className="space-y-6">
       {/* Header */}
@@ -105,7 +120,7 @@ export default function OrganizerDashboard() {
         />
         <StatsCard
           title="Revenue"
-          value="$0"
+          value={`₹${stats.revenue.toFixed(2)}`}
           icon={DollarSign}
         />
         <StatsCard
@@ -126,12 +141,6 @@ export default function OrganizerDashboard() {
                 Daily participant signups across all active events
               </p>
             </div>
-            <Button variant="link" className="text-primary" asChild>
-              <Link href="/dashboard/analytics">
-                View Reports
-                <ArrowRight className="ml-1 h-4 w-4" />
-              </Link>
-            </Button>
           </CardHeader>
           <CardContent>
             <div className="h-[300px]">
@@ -169,165 +178,45 @@ export default function OrganizerDashboard() {
           </CardContent>
         </Card>
 
-        {/* Quick Actions & Platform Tips */}
-        <div className="space-y-6">
-          <Card>
-            <CardHeader>
-              <CardTitle>Quick Actions</CardTitle>
-              <p className="text-sm text-muted-foreground">Common administrative tasks</p>
-            </CardHeader>
-            <CardContent className="space-y-2">
-              <Button className="w-full justify-start" asChild>
-                <Link href="/dashboard/events/create/details">
-                  <Plus className="mr-2 h-4 w-4" />
-                  Create New Event
-                </Link>
-              </Button>
-              <Button variant="outline" className="w-full justify-start" asChild>
-                <Link href="/dashboard/events">
-                  <ExternalLink className="mr-2 h-4 w-4" />
-                  View Live Microsites
-                </Link>
-              </Button>
-              <Button variant="outline" className="w-full justify-start" asChild>
-                <Link href="/dashboard/payments">
-                  <FileText className="mr-2 h-4 w-4" />
-                  Financial Reports
-                </Link>
-              </Button>
-            </CardContent>
-          </Card>
-
-          <Card className="bg-muted/50">
-            <CardHeader>
-              <div className="flex items-center justify-between">
-                <CardTitle>Platform Tips</CardTitle>
-                <TrendingUp className="h-5 w-5 text-muted-foreground" />
-              </div>
-            </CardHeader>
-            <CardContent>
-              <p className="text-sm text-muted-foreground">
-                Did you know? Events with custom team sizes see 40% higher engagement. Try adjusting team limits in Step 2.
-              </p>
-              <Button variant="link" className="mt-2 h-auto p-0 text-primary" asChild>
-                <Link href="/dashboard/events/create/inventory">
-                  Adjust Inventory Limits
-                  <ArrowRight className="ml-1 h-4 w-4" />
-                </Link>
-              </Button>
-            </CardContent>
-          </Card>
-        </div>
-      </div>
-
-      {/* Hackathon Management Section */}
-      <div className="space-y-4">
-        <div className="flex items-center gap-3">
-          <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-primary">
-            <Trophy className="h-5 w-5 text-primary-foreground" />
-          </div>
-          <div>
-            <h2 className="text-xl font-bold">Hackathon Management</h2>
-            <p className="text-sm text-muted-foreground">Manage every aspect of your hackathon in one place</p>
-          </div>
-        </div>
-
-        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-5">
-          {/* Registrations */}
-          <Card className="group hover:shadow-md hover:border-primary/40 transition-all duration-200">
-            <CardContent className="flex flex-col gap-3 p-5">
-              <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-blue-100 text-blue-600 dark:bg-blue-900/40 dark:text-blue-400">
-                <UserCheck className="h-5 w-5" />
-              </div>
-              <div>
-                <h3 className="font-semibold">Registrations</h3>
-                <p className="mt-0.5 text-xs text-muted-foreground">View and manage all participant registrations</p>
-              </div>
-              <Button size="sm" variant="outline" className="mt-auto w-full group-hover:bg-primary group-hover:text-primary-foreground transition-colors" asChild>
-                <Link href="/dashboard/hackathon/registrations">
-                  Manage
-                  <ArrowRight className="ml-1 h-3.5 w-3.5" />
-                </Link>
-              </Button>
-            </CardContent>
-          </Card>
-
-          {/* Team Management */}
-          <Card className="group hover:shadow-md hover:border-primary/40 transition-all duration-200">
-            <CardContent className="flex flex-col gap-3 p-5">
-              <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-purple-100 text-purple-600 dark:bg-purple-900/40 dark:text-purple-400">
-                <Users className="h-5 w-5" />
-              </div>
-              <div>
-                <h3 className="font-semibold">Team Management</h3>
-                <p className="mt-0.5 text-xs text-muted-foreground">Oversee teams, members, and group activity</p>
-              </div>
-              <Button size="sm" variant="outline" className="mt-auto w-full group-hover:bg-primary group-hover:text-primary-foreground transition-colors" asChild>
-                <Link href="/dashboard/hackathon/teams">
-                  Manage
-                  <ArrowRight className="ml-1 h-3.5 w-3.5" />
-                </Link>
-              </Button>
-            </CardContent>
-          </Card>
-
-          {/* Submissions */}
-          <Card className="group hover:shadow-md hover:border-primary/40 transition-all duration-200">
-            <CardContent className="flex flex-col gap-3 p-5">
-              <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-green-100 text-green-600 dark:bg-green-900/40 dark:text-green-400">
-                <Send className="h-5 w-5" />
-              </div>
-              <div>
-                <h3 className="font-semibold">Submissions</h3>
-                <p className="mt-0.5 text-xs text-muted-foreground">Review and evaluate hackathon project submissions</p>
-              </div>
-              <Button size="sm" variant="outline" className="mt-auto w-full group-hover:bg-primary group-hover:text-primary-foreground transition-colors" asChild>
-                <Link href="/dashboard/hackathon/submissions">
-                  Manage
-                  <ArrowRight className="ml-1 h-3.5 w-3.5" />
-                </Link>
-              </Button>
-            </CardContent>
-          </Card>
-
-          {/* Schedule */}
-          <Card className="group hover:shadow-md hover:border-primary/40 transition-all duration-200">
-            <CardContent className="flex flex-col gap-3 p-5">
-              <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-orange-100 text-orange-600 dark:bg-orange-900/40 dark:text-orange-400">
-                <Clock className="h-5 w-5" />
-              </div>
-              <div>
-                <h3 className="font-semibold">Schedule</h3>
-                <p className="mt-0.5 text-xs text-muted-foreground">Plan timelines, sessions, and event milestones</p>
-              </div>
-              <Button size="sm" variant="outline" className="mt-auto w-full group-hover:bg-primary group-hover:text-primary-foreground transition-colors" asChild>
-                <Link href="/dashboard/hackathon/schedule">
-                  Manage
-                  <ArrowRight className="ml-1 h-3.5 w-3.5" />
-                </Link>
-              </Button>
-            </CardContent>
-          </Card>
-
-          {/* Analytics */}
-          <Card className="group hover:shadow-md hover:border-primary/40 transition-all duration-200">
-            <CardContent className="flex flex-col gap-3 p-5">
-              <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-rose-100 text-rose-600 dark:bg-rose-900/40 dark:text-rose-400">
-                <BarChart2 className="h-5 w-5" />
-              </div>
-              <div>
-                <h3 className="font-semibold">Analytics</h3>
-                <p className="mt-0.5 text-xs text-muted-foreground">Track performance, trends, and key metrics</p>
-              </div>
-              <Button size="sm" variant="outline" className="mt-auto w-full group-hover:bg-primary group-hover:text-primary-foreground transition-colors" asChild>
-                <Link href="/dashboard/hackathon/analytics">
-                  Manage
-                  <ArrowRight className="ml-1 h-3.5 w-3.5" />
-                </Link>
-              </Button>
-            </CardContent>
-          </Card>
-        </div>
+        {/* Quick Actions */}
+        <Card>
+          <CardHeader>
+            <CardTitle>Quick Actions</CardTitle>
+            <p className="text-sm text-muted-foreground">Common administrative tasks</p>
+          </CardHeader>
+          <CardContent className="space-y-2">
+            <Button className="w-full justify-start" asChild>
+              <Link href="/dashboard/events/create/details">
+                <Plus className="mr-2 h-4 w-4" />
+                Create New Event
+              </Link>
+            </Button>
+            <Button variant="outline" className="w-full justify-start" asChild>
+              <Link href="/dashboard/events">
+                <ExternalLink className="mr-2 h-4 w-4" />
+                View All Events
+              </Link>
+            </Button>
+            <Button variant="outline" className="w-full justify-start" asChild>
+              <Link href="/dashboard/payments">
+                <FileText className="mr-2 h-4 w-4" />
+                Payment Records
+              </Link>
+            </Button>
+            <Button variant="outline" className="w-full justify-start" asChild>
+              <Link href="/dashboard/accommodation">
+                <Users className="mr-2 h-4 w-4" />
+                Accommodation
+              </Link>
+            </Button>
+            <Button variant="outline" className="w-full justify-start" asChild>
+              <Link href="/dashboard/notifications">
+                <FileText className="mr-2 h-4 w-4" />
+                Notifications
+              </Link>
+            </Button>
+          </CardContent>
+        </Card>
       </div>
     </div>
   )

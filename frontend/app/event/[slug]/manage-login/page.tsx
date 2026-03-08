@@ -19,6 +19,7 @@ export default function EventManageLoginPage() {
   const [password, setPassword] = useState("")
   const [loading, setLoading] = useState(false)
   const [event, setEvent] = useState<any>(null)
+  const [error, setError] = useState<string | null>(null)
 
   useEffect(() => {
     const authKey = sessionStorage.getItem("event_admin")
@@ -31,9 +32,23 @@ export default function EventManageLoginPage() {
       try {
         const data = await api.getEventBySlug(slug)
         setEvent(data)
-      } catch (error) {
-        console.error("Failed to load event", error)
+        return
+      } catch (apiError) {
+        // API failed, try localStorage
       }
+
+      try {
+        const publishedEvents = JSON.parse(localStorage.getItem('published_events') || '[]')
+        const localEvent = publishedEvents.find((e: any) => e.slug === slug)
+        if (localEvent) {
+          setEvent(localEvent)
+          return
+        }
+      } catch (storageError) {
+        // localStorage failed
+      }
+
+      setError("Event not found. Please publish the event from the dashboard first.")
     }
     loadEvent()
   }, [slug, router])
@@ -69,6 +84,24 @@ export default function EventManageLoginPage() {
     } finally {
       setLoading(false)
     }
+  }
+
+  if (error) {
+    return (
+      <div className="min-h-screen flex items-center justify-center p-4">
+        <Card className="w-full max-w-md">
+          <CardHeader>
+            <CardTitle>Event Not Found</CardTitle>
+            <CardDescription>{error}</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <Button onClick={() => router.push('/dashboard/events')} className="w-full">
+              Go to Dashboard
+            </Button>
+          </CardContent>
+        </Card>
+      </div>
+    )
   }
 
   if (!event) {

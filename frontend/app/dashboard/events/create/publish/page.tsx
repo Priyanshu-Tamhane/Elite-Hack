@@ -112,6 +112,9 @@ export default function PublishEventPage() {
       const inventory = savedInventory ? JSON.parse(savedInventory) : {}
       const payments = savedPayments ? JSON.parse(savedPayments) : {}
       const hackathon = hackathonData ? JSON.parse(hackathonData) : {}
+      
+      console.log('Inventory data:', inventory)
+      console.log('Festival artists type:', typeof inventory.artists, inventory.artists)
       const slug = generateSlug(data.eventName || "my-event")
       const password = generatePassword()
       const isConference = data.category === "conference"
@@ -210,8 +213,15 @@ export default function PublishEventPage() {
 
       // ── Festival-specific payload ──
       if (isFestival) {
-        publishedEvent.festival = inventory
-        publishedEvent.schedule = inventory.sub_events || []
+        const festivalData = inventory || {}
+        publishedEvent.festival = {
+          sub_events: Array.isArray(festivalData.sub_events) ? festivalData.sub_events : [],
+          tickets: Array.isArray(festivalData.tickets) ? festivalData.tickets : [],
+          artists: Array.isArray(festivalData.artists) ? festivalData.artists : [],
+          sponsors: Array.isArray(festivalData.sponsors) ? festivalData.sponsors : [],
+          social_links: festivalData.social_links || {}
+        }
+        publishedEvent.schedule = []
       }
 
       // Always persist a local published copy so the microsite and management URL work locally
@@ -221,12 +231,32 @@ export default function PublishEventPage() {
 
       // Attempt backend creation but do not block the user if it fails
       try {
+        console.log('Attempting to create event in MongoDB...')
         const created = await api.createEvent(publishedEvent)
+        console.log('Event created in MongoDB:', created)
         // if backend returns created event, update local copy with backend id
         const updated = JSON.parse(localStorage.getItem('published_events') || '[]').map((e: any) => e.slug === created.slug ? { ...e, _id: created._id, _local: false } : e)
         localStorage.setItem('published_events', JSON.stringify(updated))
-      } catch (err) {
-        console.warn('API createEvent failed, saved locally instead', err)
+        toast({
+          title: "Success!",
+          description: "Event saved to database successfully.",
+        })
+      } catch (err: any) {
+        console.error('API createEvent failed:', err.message || err)
+        const errorMsg = err.message || 'Unknown error'
+        if (errorMsg.includes('401') || errorMsg.includes('token') || errorMsg.includes('auth')) {
+          toast({
+            title: "Authentication Error",
+            description: "You need to be logged in. Event saved locally only.",
+            variant: "destructive",
+          })
+        } else {
+          toast({
+            title: "Database Error",
+            description: `Failed to save to database: ${errorMsg}. Event saved locally only.`,
+            variant: "destructive",
+          })
+        }
       }
 
       // Cleanup draft keys (keep published_events)

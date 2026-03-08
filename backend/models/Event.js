@@ -25,14 +25,6 @@ const eventSchema = new mongoose.Schema({
     bunkBeds: { type: Number }
   },
 
-  // RSVP Settings
-  rsvp_settings: {
-    enabled: { type: Boolean, default: true },
-    plus_one: { type: Boolean, default: true },
-    max_guests: { type: Number, default: 5 },
-    meal_preference: { type: Boolean, default: true }
-  },
-
   // Media
   media: {
     hero_image: { type: String },
@@ -189,6 +181,39 @@ const eventSchema = new mongoose.Schema({
     secondaryColor: { type: String, default: '#64748b' },
     logoUrl: { type: String },
     bannerUrl: { type: String }
+  },
+
+  // ─── FESTIVAL-SPECIFIC FIELDS ─────────────────────────────────────
+  festival: {
+    sub_events: [{
+      name: String,
+      category: String,
+      description: String,
+      date: String,
+      time: String
+    }],
+    tickets: [{
+      name: String,
+      price: Number,
+      description: String
+    }],
+    artists: [{
+      name: String,
+      type: String,
+      date: String,
+      time: String,
+      stage: String
+    }],
+    sponsors: [{
+      name: String,
+      category: String
+    }],
+    social_links: {
+      instagram: String,
+      youtube: String,
+      facebook: String,
+      twitter: String
+    }
   }
 
 }, { timestamps: true });

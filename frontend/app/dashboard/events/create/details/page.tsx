@@ -102,6 +102,15 @@ export default function CreateEventDetailsPage() {
         setRegistrationDeadline(d.registrationDeadline || "")
         if (d.agenda?.length) setAgenda(d.agenda)
         if (d.resources?.length) setResources(d.resources)
+        setCompanyMission(d.companyMission || "")
+        setEventObjectives(d.eventObjectives || "")
+        setTargetAudience(d.targetAudience || "")
+        setDressCode(d.dressCode || "")
+        setParkingInfo(d.parkingInfo || "")
+        setContactPerson(d.contactPerson || "")
+        setContactEmail(d.contactEmail || "")
+        setPrimaryColor(d.primaryColor || "#2563eb")
+        setSecondaryColor(d.secondaryColor || "#64748b")
       } catch { }
     }
     setIsLoaded(true)
@@ -113,10 +122,12 @@ export default function CreateEventDetailsPage() {
     const data = {
       eventName, category, description, startDate, endDate, startTime, venue, bannerUrl,
       tagline, eventMode, logoUrl, registrationType, registrationDeadline, agenda, resources,
+      companyMission, eventObjectives, targetAudience, dressCode, parkingInfo, contactPerson, contactEmail, primaryColor, secondaryColor,
     }
     localStorage.setItem(STORAGE_KEY, JSON.stringify(data))
   }, [isLoaded, eventName, category, description, startDate, endDate, startTime, venue, bannerUrl,
-    tagline, eventMode, logoUrl, registrationType, registrationDeadline, agenda, resources])
+    tagline, eventMode, logoUrl, registrationType, registrationDeadline, agenda, resources,
+    companyMission, eventObjectives, targetAudience, dressCode, parkingInfo, contactPerson, contactEmail, primaryColor, secondaryColor])
 
   // Agenda helpers
   const updateSession = (dayIdx: number, sIdx: number, field: keyof Session, value: string) =>
@@ -145,6 +156,28 @@ export default function CreateEventDetailsPage() {
   }
 
   const handleNext = () => {
+    // Validation
+    if (!eventName.trim()) {
+      toast({ title: "Error", description: "Event name is required", variant: "destructive" })
+      return
+    }
+    if (!category) {
+      toast({ title: "Error", description: "Please select a category", variant: "destructive" })
+      return
+    }
+    if (!description.trim()) {
+      toast({ title: "Error", description: "Event description is required", variant: "destructive" })
+      return
+    }
+    if (!startDate) {
+      toast({ title: "Error", description: "Start date is required", variant: "destructive" })
+      return
+    }
+    if (!venue.trim()) {
+      toast({ title: "Error", description: "Venue is required", variant: "destructive" })
+      return
+    }
+
     const base = { eventName, category, description, startDate, endDate, startTime, venue, bannerUrl }
     const confExtras = isConference ? {
       conferenceInfo: { tagline, eventMode, logo: logoUrl },
