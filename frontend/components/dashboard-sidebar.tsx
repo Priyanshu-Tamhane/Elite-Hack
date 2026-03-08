@@ -45,7 +45,7 @@ export function DashboardSidebar({ userRole = "organizer" }: SidebarProps) {
       <div className="flex h-full flex-col justify-between py-4">
         <nav className="space-y-1 px-3">
           {navItems.map((item) => {
-            const isActive = pathname === item.href || pathname.startsWith(item.href + "/")
+            const isActive = pathname === item.href
             return (
               <Link
                 key={item.href}

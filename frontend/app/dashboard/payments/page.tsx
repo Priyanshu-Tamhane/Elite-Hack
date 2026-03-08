@@ -1,5 +1,7 @@
 "use client"
 
+import { useEffect, useState } from "react"
+import { api } from "@/lib/api"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
@@ -20,7 +22,6 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table"
-import { StatsCard } from "@/components/stats-card"
 import {
   Search,
   Download,
@@ -36,55 +37,91 @@ import {
   ChevronRight,
 } from "lucide-react"
 
-const transactions = [
-  {
-    id: "TXN-88291",
-    payer: { name: "Sarah Jenkins", email: "", avatar: "/placeholder.svg?height=32&width=32" },
-    date: "Oct 24, 2024",
-    category: "VIP Ticket",
-    method: "VISA •••• 4242",
-    amount: "$299.00",
-    status: "Completed",
-  },
-  {
-    id: "TXN-88292",
-    payer: { name: "Michael Chen", email: "", avatar: "/placeholder.svg?height=32&width=32" },
-    date: "Oct 24, 2024",
-    category: "General Admission",
-    method: "BANK TRANSFER",
-    amount: "$149.50",
-    status: "Pending",
-  },
-  {
-    id: "TXN-88293",
-    payer: { name: "Emma Thompson", email: "", avatar: "/placeholder.svg?height=32&width=32" },
-    date: "Oct 23, 2024",
-    category: "Accommodation",
-    method: "MASTERCARD •••• 8812",
-    amount: "$1200.00",
-    status: "Completed",
-  },
-  {
-    id: "TXN-88294",
-    payer: { name: "Robert Wilson", email: "", avatar: "/placeholder.svg?height=32&width=32" },
-    date: "Oct 22, 2024",
-    category: "Workshop",
-    method: "PAYPAL",
-    amount: "$85.00",
-    status: "Refunded",
-  },
-  {
-    id: "TXN-88295",
-    payer: { name: "Olivia Garcia", email: "", avatar: "/placeholder.svg?height=32&width=32" },
-    date: "Oct 22, 2024",
-    category: "Exhibitor Pass",
-    method: "VISA •••• 1109",
-    amount: "$350.00",
-    status: "Completed",
-  },
-]
+interface Payment {
+  _id: string
+  transactionId: string
+  participantName: string
+  participantEmail: string
+  amount: number
+  currency: string
+  category: string
+  paymentMethod?: string
+  status: string
+  createdAt: string
+  eventId: { eventName: string; slug: string }
+}
+
+interface Event {
+  _id: string
+  eventName: string
+  slug: string
+}
 
 export default function PaymentsHistoryPage() {
+  const [payments, setPayments] = useState<Payment[]>([])
+  const [events, setEvents] = useState<Event[]>([])
+  const [selectedEvent, setSelectedEvent] = useState<string>("all")
+  const [stats, setStats] = useState({ totalRevenue: 0, pendingPayouts: 0, totalRefunds: 0 })
+  const [searchQuery, setSearchQuery] = useState("")
+  const [statusFilter, setStatusFilter] = useState("all")
+  const [loading, setLoading] = useState(true)
+
+  useEffect(() => {
+    loadData()
+  }, [])
+
+  const loadData = async () => {
+    try {
+      const [paymentsData, eventsData, statsData] = await Promise.all([
+        api.getPayments(),
+        api.getEvents(),
+        api.getPaymentStats()
+      ])
+      setPayments(paymentsData)
+      setEvents(eventsData)
+      setStats(statsData)
+    } catch (error) {
+      console.error('Failed to load payments:', error)
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  const handleEventChange = async (eventId: string) => {
+    setSelectedEvent(eventId)
+    if (eventId === "all") {
+      const paymentsData = await api.getPayments()
+      setPayments(paymentsData)
+    } else {
+      const paymentsData = await api.getPaymentsByEvent(eventId)
+      setPayments(paymentsData)
+    }
+  }
+
+  const handleRefund = async (paymentId: string) => {
+    try {
+      await api.refundPayment(paymentId)
+      loadData()
+    } catch (error) {
+      console.error('Refund failed:', error)
+    }
+  }
+
+  const filteredPayments = payments.filter(p => {
+    const matchesSearch = p.participantName.toLowerCase().includes(searchQuery.toLowerCase()) ||
+                         p.transactionId.toLowerCase().includes(searchQuery.toLowerCase())
+    const matchesStatus = statusFilter === "all" || p.status.toLowerCase() === statusFilter.toLowerCase()
+    return matchesSearch && matchesStatus
+  })
+
+  const eventStats = selectedEvent === "all" ? stats : {
+    totalRevenue: filteredPayments.filter(p => p.status === 'Completed').reduce((sum, p) => sum + p.amount, 0),
+    pendingPayouts: filteredPayments.filter(p => p.status === 'Pending').reduce((sum, p) => sum + p.amount, 0),
+    totalRefunds: filteredPayments.filter(p => p.status === 'Refunded').reduce((sum, p) => sum + p.amount, 0)
+  }
+
+  if (loading) return <div className="p-8">Loading...</div>
+
   return (
     <div className="space-y-6">
       {/* Header */}
@@ -96,15 +133,15 @@ export default function PaymentsHistoryPage() {
           </p>
         </div>
         <div className="flex gap-3">
-          <Select defaultValue="30">
-            <SelectTrigger className="w-[150px]">
-              <SelectValue />
+          <Select value={selectedEvent} onValueChange={handleEventChange}>
+            <SelectTrigger className="w-[200px]">
+              <SelectValue placeholder="Select Event" />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="7">Last 7 Days</SelectItem>
-              <SelectItem value="30">Last 30 Days</SelectItem>
-              <SelectItem value="90">Last 90 Days</SelectItem>
-              <SelectItem value="365">This Year</SelectItem>
+              <SelectItem value="all">All Events</SelectItem>
+              {events.map(event => (
+                <SelectItem key={event._id} value={event._id}>{event.eventName}</SelectItem>
+              ))}
             </SelectContent>
           </Select>
           <Button>
@@ -115,17 +152,13 @@ export default function PaymentsHistoryPage() {
       </div>
 
       {/* Stats Cards */}
-      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
         <Card>
           <CardContent className="p-6">
             <div className="flex items-center justify-between">
               <div>
-                <div className="flex items-center gap-1 text-xs text-emerald-500">
-                  <TrendingUp className="h-3 w-3" />
-                  14.2%
-                </div>
                 <p className="text-sm text-muted-foreground">Total Revenue</p>
-                <p className="text-2xl font-bold">$42,560.00</p>
+                <p className="text-2xl font-bold">${eventStats.totalRevenue.toFixed(2)}</p>
               </div>
               <div className="flex h-12 w-12 items-center justify-center rounded-lg bg-accent">
                 <DollarSign className="h-6 w-6 text-accent-foreground" />
@@ -137,12 +170,8 @@ export default function PaymentsHistoryPage() {
           <CardContent className="p-6">
             <div className="flex items-center justify-between">
               <div>
-                <div className="flex items-center gap-1 text-xs text-emerald-500">
-                  <TrendingUp className="h-3 w-3" />
-                  5.1%
-                </div>
                 <p className="text-sm text-muted-foreground">Pending Payouts</p>
-                <p className="text-2xl font-bold">$3,120.50</p>
+                <p className="text-2xl font-bold">${eventStats.pendingPayouts.toFixed(2)}</p>
               </div>
               <div className="flex h-12 w-12 items-center justify-center rounded-lg bg-accent">
                 <Clock className="h-6 w-6 text-accent-foreground" />
@@ -154,32 +183,11 @@ export default function PaymentsHistoryPage() {
           <CardContent className="p-6">
             <div className="flex items-center justify-between">
               <div>
-                <div className="flex items-center gap-1 text-xs text-red-500">
-                  <TrendingDown className="h-3 w-3" />
-                  2.3%
-                </div>
                 <p className="text-sm text-muted-foreground">Total Refunds</p>
-                <p className="text-2xl font-bold">$845.00</p>
+                <p className="text-2xl font-bold">${eventStats.totalRefunds.toFixed(2)}</p>
               </div>
               <div className="flex h-12 w-12 items-center justify-center rounded-lg bg-accent">
                 <RefreshCcw className="h-6 w-6 text-accent-foreground" />
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardContent className="p-6">
-            <div className="flex items-center justify-between">
-              <div>
-                <div className="flex items-center gap-1 text-xs text-emerald-500">
-                  <TrendingUp className="h-3 w-3" />
-                  0.5%
-                </div>
-                <p className="text-sm text-muted-foreground">Active Coupons</p>
-                <p className="text-2xl font-bold">12</p>
-              </div>
-              <div className="flex h-12 w-12 items-center justify-center rounded-lg bg-accent">
-                <CreditCard className="h-6 w-6 text-accent-foreground" />
               </div>
             </div>
           </CardContent>
@@ -192,98 +200,130 @@ export default function PaymentsHistoryPage() {
           <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
             <div className="relative flex-1 max-w-sm">
               <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-              <Input placeholder="Search by payer or ID..." className="pl-10" />
+              <Input 
+                placeholder="Search by payer or ID..." 
+                className="pl-10" 
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+              />
             </div>
             <div className="flex items-center gap-3">
-              <Button variant="outline" size="icon">
-                <Filter className="h-4 w-4" />
-              </Button>
               <div className="flex items-center rounded-lg border">
-                <Button variant="ghost" size="sm" className="rounded-r-none">All</Button>
-                <Button variant="ghost" size="sm" className="rounded-none border-x">Success</Button>
-                <Button variant="ghost" size="sm" className="rounded-none border-r">Pending</Button>
-                <Button variant="ghost" size="sm" className="rounded-l-none">Refunded</Button>
+                <Button 
+                  variant={statusFilter === "all" ? "default" : "ghost"} 
+                  size="sm" 
+                  className="rounded-r-none"
+                  onClick={() => setStatusFilter("all")}
+                >
+                  All
+                </Button>
+                <Button 
+                  variant={statusFilter === "completed" ? "default" : "ghost"} 
+                  size="sm" 
+                  className="rounded-none border-x"
+                  onClick={() => setStatusFilter("completed")}
+                >
+                  Success
+                </Button>
+                <Button 
+                  variant={statusFilter === "pending" ? "default" : "ghost"} 
+                  size="sm" 
+                  className="rounded-none border-r"
+                  onClick={() => setStatusFilter("pending")}
+                >
+                  Pending
+                </Button>
+                <Button 
+                  variant={statusFilter === "refunded" ? "default" : "ghost"} 
+                  size="sm" 
+                  className="rounded-l-none"
+                  onClick={() => setStatusFilter("refunded")}
+                >
+                  Refunded
+                </Button>
               </div>
             </div>
           </div>
         </CardHeader>
         <CardContent>
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>ID</TableHead>
-                <TableHead>Payer</TableHead>
-                <TableHead>Date</TableHead>
-                <TableHead>Category</TableHead>
-                <TableHead>Amount</TableHead>
-                <TableHead>Status</TableHead>
-                <TableHead></TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {transactions.map((txn) => (
-                <TableRow key={txn.id}>
-                  <TableCell className="font-mono text-sm">{txn.id}</TableCell>
-                  <TableCell>
-                    <div className="flex items-center gap-3">
-                      <Avatar className="h-8 w-8">
-                        <AvatarImage src={txn.payer.avatar} />
-                        <AvatarFallback>
-                          {txn.payer.name.split(" ").map((n) => n[0]).join("")}
-                        </AvatarFallback>
-                      </Avatar>
-                      <span className="font-medium">{txn.payer.name}</span>
-                    </div>
-                  </TableCell>
-                  <TableCell className="text-muted-foreground">{txn.date}</TableCell>
-                  <TableCell>
-                    <div>
-                      <p>{txn.category}</p>
-                      <p className="text-xs text-muted-foreground">{txn.method}</p>
-                    </div>
-                  </TableCell>
-                  <TableCell className="font-medium">{txn.amount}</TableCell>
-                  <TableCell>
-                    <Badge
-                      variant={
-                        txn.status === "Completed"
-                          ? "default"
-                          : txn.status === "Pending"
-                          ? "secondary"
-                          : "outline"
-                      }
-                    >
-                      {txn.status}
-                    </Badge>
-                  </TableCell>
-                  <TableCell>
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      disabled={txn.status === "Refunded"}
-                    >
-                      Refund
-                    </Button>
-                  </TableCell>
-                </TableRow>
-              ))}
-            </TableBody>
-          </Table>
-          <div className="mt-4 flex items-center justify-between">
-            <p className="text-sm text-muted-foreground">
-              Showing 5 of 248 transactions
-            </p>
-            <div className="flex items-center gap-2">
-              <Button variant="outline" size="sm">
-                <ChevronLeft className="h-4 w-4" />
-                Previous
-              </Button>
-              <Button variant="outline" size="sm">
-                Next
-                <ChevronRight className="h-4 w-4" />
-              </Button>
+          {filteredPayments.length === 0 ? (
+            <div className="text-center py-8 text-muted-foreground">
+              No payments found
             </div>
-          </div>
+          ) : (
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>ID</TableHead>
+                  <TableHead>Payer</TableHead>
+                  <TableHead>Event</TableHead>
+                  <TableHead>Date</TableHead>
+                  <TableHead>Category</TableHead>
+                  <TableHead>Amount</TableHead>
+                  <TableHead>Status</TableHead>
+                  <TableHead></TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {filteredPayments.map((payment) => (
+                  <TableRow key={payment._id}>
+                    <TableCell className="font-mono text-sm">{payment.transactionId}</TableCell>
+                    <TableCell>
+                      <div className="flex items-center gap-3">
+                        <Avatar className="h-8 w-8">
+                          <AvatarFallback>
+                            {payment.participantName.split(" ").map((n) => n[0]).join("")}
+                          </AvatarFallback>
+                        </Avatar>
+                        <div>
+                          <p className="font-medium">{payment.participantName}</p>
+                          <p className="text-xs text-muted-foreground">{payment.participantEmail}</p>
+                        </div>
+                      </div>
+                    </TableCell>
+                    <TableCell className="text-sm">{payment.eventId?.eventName || 'N/A'}</TableCell>
+                    <TableCell className="text-muted-foreground">
+                      {new Date(payment.createdAt).toLocaleDateString()}
+                    </TableCell>
+                    <TableCell>
+                      <div>
+                        <p>{payment.category}</p>
+                        {payment.paymentMethod && (
+                          <p className="text-xs text-muted-foreground">{payment.paymentMethod}</p>
+                        )}
+                      </div>
+                    </TableCell>
+                    <TableCell className="font-medium">
+                      ${payment.amount.toFixed(2)} {payment.currency}
+                    </TableCell>
+                    <TableCell>
+                      <Badge
+                        variant={
+                          payment.status === "Completed"
+                            ? "default"
+                            : payment.status === "Pending"
+                            ? "secondary"
+                            : "outline"
+                        }
+                      >
+                        {payment.status}
+                      </Badge>
+                    </TableCell>
+                    <TableCell>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        disabled={payment.status === "Refunded"}
+                        onClick={() => handleRefund(payment._id)}
+                      >
+                        Refund
+                      </Button>
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          )}
         </CardContent>
       </Card>
 
@@ -294,7 +334,7 @@ export default function PaymentsHistoryPage() {
           <div>
             <p className="font-medium">Payment Reconciliation</p>
             <p className="text-sm text-muted-foreground">
-              Payments are automatically reconciled every 24 hours. Last sync: October 24, 2024 at 2:00 AM UTC.
+              Payments are automatically reconciled every 24 hours. Last sync: {new Date().toLocaleString()}.
             </p>
           </div>
         </CardContent>

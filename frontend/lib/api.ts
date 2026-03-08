@@ -155,6 +155,54 @@ class ApiService {
       method: 'POST',
     });
   }
+
+  // Payments
+  async getPayments() {
+    return this.request('/payments');
+  }
+
+  async getPaymentsByEvent(eventId: string) {
+    return this.request(`/payments/event/${eventId}`);
+  }
+
+  async getPaymentStats() {
+    return this.request('/payments/stats');
+  }
+
+  async refundPayment(paymentId: string) {
+    return this.request(`/payments/${paymentId}/refund`, {
+      method: 'PATCH',
+    });
+  }
+
+  // Notifications
+  async getNotifications() {
+    return this.request('/notifications');
+  }
+
+  async getNotification(id: string) {
+    return this.request(`/notifications/${id}`);
+  }
+
+  async createNotification(data: any) {
+    return this.request('/notifications', {
+      method: 'POST',
+      body: JSON.stringify(data),
+    });
+  }
+
+  async updateNotification(id: string, data: any) {
+    return this.request(`/notifications/${id}`, {
+      method: 'PUT',
+      body: JSON.stringify(data),
+    });
+  }
+
+  async deleteNotification(id: string) {
+    return this.request(`/notifications/${id}`, {
+      method: 'DELETE',
+    });
+  }
 }
 
 export const api = new ApiService();
