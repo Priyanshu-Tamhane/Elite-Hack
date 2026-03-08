@@ -14,6 +14,7 @@ import {
 } from "@/components/ui/select"
 import { StepProgress } from "@/components/step-progress"
 import { useEventCreation } from "@/lib/event-creation-context"
+import { useEventCreation } from "@/lib/event-creation-context"
 import {
   ArrowRight, ArrowLeft, Grid3X3, CreditCard,
   Shield, Info, Copy, Percent, CheckCircle,
@@ -24,6 +25,14 @@ const steps = [
   { label: "Inventory Setup", href: "/dashboard/events/create/inventory" },
   { label: "Payment Settings", href: "/dashboard/events/create/payments" },
   { label: "Publish Event", href: "/dashboard/events/create/publish" },
+]
+
+const stepsCorporate = [
+  { label: "EVENT DETAILS", href: "/dashboard/events/create/details" },
+  { label: "CORPORATE DETAILS", href: "/dashboard/events/create/corporate" },
+  { label: "INVENTORY", href: "/dashboard/events/create/inventory" },
+  { label: "PAYMENTS", href: "/dashboard/events/create/payments" },
+  { label: "REVIEW", href: "/dashboard/events/create/publish" },
 ]
 
 export default function CreateEventPaymentsPage() {

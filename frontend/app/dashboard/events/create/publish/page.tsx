@@ -8,10 +8,19 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { StepProgress } from "@/components/step-progress"
 import { CheckCircle, ExternalLink, Copy, Rocket, Lock } from "lucide-react"
 import { useToast } from "@/hooks/use-toast"
+import { useEventCreation } from "@/lib/event-creation-context"
 import { api } from "@/lib/api"
 
-const steps = [
+const stepsBasic = [
   { label: "Event Details", href: "/dashboard/events/create/details" },
+  { label: "Inventory", href: "/dashboard/events/create/inventory" },
+  { label: "Payments", href: "/dashboard/events/create/payments" },
+  { label: "Publish", href: "/dashboard/events/create/publish" },
+]
+
+const stepsCorporate = [
+  { label: "Event Details", href: "/dashboard/events/create/details" },
+  { label: "Corporate Details", href: "/dashboard/events/create/corporate" },
   { label: "Inventory", href: "/dashboard/events/create/inventory" },
   { label: "Payments", href: "/dashboard/events/create/payments" },
   { label: "Publish", href: "/dashboard/events/create/publish" },
@@ -38,6 +47,13 @@ function generatePassword(): string {
 export default function PublishEventPage() {
   const router = useRouter()
   const { toast } = useToast()
+  const { eventData } = useEventCreation()
+  const category = eventData?.category || ""
+
+  const isCorporateEvent = ['corporate event', 'conference', 'workshop'].includes((category || "").toLowerCase())
+  const steps = isCorporateEvent ? stepsCorporate : stepsBasic
+  const currentStepIndex = isCorporateEvent ? 4 : 3
+
   const [isPublished, setIsPublished] = useState(false)
   const [eventSlug, setEventSlug] = useState("")
   const [eventName, setEventName] = useState("")
@@ -54,8 +70,17 @@ export default function PublishEventPage() {
         const slug = generateSlug(data.eventName || "my-event")
         setEventSlug(slug)
         setEventName(data.eventName || "My Event")
-        setPublicUrl(`${window.location.origin}/event/${slug}`)
-        setManageUrl(`${window.location.origin}/event/${slug}/manage`)
+
+        const category = (data.category || "").toLowerCase()
+        const isCorporate = ["corporate event", "conference", "workshop"].includes(category)
+
+        if (isCorporate) {
+          setPublicUrl(`${window.location.origin}/corporate-demo`)
+          setManageUrl(`${window.location.origin}/corporate-demo/manage`)
+        } else {
+          setPublicUrl(`${window.location.origin}/event/${slug}`)
+          setManageUrl(`${window.location.origin}/event/${slug}/manage`)
+        }
       } catch (error) {
         console.error("Failed to load event data", error)
       }
@@ -178,9 +203,7 @@ export default function PublishEventPage() {
       <div className="space-y-8">
         <div>
           <h1 className="text-3xl font-bold">Event Published Successfully!</h1>
-          <p className="text-muted-foreground">
-            Your event microsite is now live and ready to share.
-          </p>
+          <p className="text-muted-foreground">Your event microsite is now live and ready to share.</p>
         </div>
 
         <Card className="border-green-200 bg-green-50">
@@ -203,17 +226,9 @@ export default function PublishEventPage() {
             </CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">
-            <p className="text-sm text-muted-foreground">
-              Use this password to access the management panel
-            </p>
-            <div className="p-3 bg-white rounded-lg font-mono text-lg font-bold text-center">
-              {managementPassword}
-            </div>
-            <Button
-              variant="outline"
-              className="w-full"
-              onClick={() => copyToClipboard(managementPassword)}
-            >
+            <p className="text-sm text-muted-foreground">Use this password to access the management panel</p>
+            <div className="p-3 bg-white rounded-lg font-mono text-lg font-bold text-center">{managementPassword}</div>
+            <Button variant="outline" className="w-full" onClick={() => copyToClipboard(managementPassword)}>
               <Copy className="h-4 w-4 mr-2" />
               Copy Password
             </Button>
@@ -229,15 +244,9 @@ export default function PublishEventPage() {
               </CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
-              <div className="p-3 bg-muted rounded-lg break-all text-sm">
-                {publicUrl}
-              </div>
+              <div className="p-3 bg-muted rounded-lg break-all text-sm">{publicUrl}</div>
               <div className="flex gap-2">
-                <Button
-                  variant="outline"
-                  className="flex-1"
-                  onClick={() => copyToClipboard(publicUrl)}
-                >
+                <Button variant="outline" className="flex-1" onClick={() => copyToClipboard(publicUrl)}>
                   <Copy className="h-4 w-4 mr-2" />
                   Copy Link
                 </Button>
@@ -259,15 +268,9 @@ export default function PublishEventPage() {
               </CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
-              <div className="p-3 bg-muted rounded-lg break-all text-sm">
-                {manageUrl}
-              </div>
+              <div className="p-3 bg-muted rounded-lg break-all text-sm">{manageUrl}</div>
               <div className="flex gap-2">
-                <Button
-                  variant="outline"
-                  className="flex-1"
-                  onClick={() => copyToClipboard(manageUrl)}
-                >
+                <Button variant="outline" className="flex-1" onClick={() => copyToClipboard(manageUrl)}>
                   <Copy className="h-4 w-4 mr-2" />
                   Copy Link
                 </Button>
@@ -298,12 +301,10 @@ export default function PublishEventPage() {
     <div className="space-y-8">
       <div>
         <h1 className="text-3xl font-bold">Publish Your Event</h1>
-        <p className="text-muted-foreground">
-          Review and publish your event to generate the microsite.
-        </p>
+        <p className="text-muted-foreground">Review and publish your event to generate the microsite.</p>
       </div>
 
-      <StepProgress steps={steps} currentStep={3} />
+      <StepProgress steps={steps} currentStep={currentStepIndex} />
 
       <Card>
         <CardHeader>

@@ -7,21 +7,6 @@ import { WeddingMicrosite } from "@/components/microsites/WeddingMicrosite"
 import { DefaultMicrosite } from "@/components/microsites/DefaultMicrosite"
 import { api } from "@/lib/api"
 
-// Lazy-load the conference microsite for better performance
-const ConferenceMicrosite = lazy(() =>
-  import("@/components/microsites/ConferenceMicrosite").then(m => ({ default: m.ConferenceMicrosite }))
-)
-
-function LoadingScreen() {
-  return (
-    <div style={{ minHeight: "100vh", display: "flex", alignItems: "center", justifyContent: "center", background: "#080812", color: "#94a3b8", flexDirection: "column", gap: "1rem" }}>
-      <div style={{ width: 40, height: 40, border: "3px solid rgba(99,102,241,0.2)", borderTopColor: "#6366f1", borderRadius: "50%", animation: "spin 0.8s linear infinite" }} />
-      <p style={{ fontSize: "0.9rem", letterSpacing: "0.05em" }}>Loading event...</p>
-      <style>{`@keyframes spin{to{transform:rotate(360deg)}}`}</style>
-    </div>
-  )
-}
-
 export default function EventMicrositePage() {
   const params = useParams()
   const slug = params.slug as string
@@ -53,6 +38,37 @@ export default function EventMicrositePage() {
         </div>
       </div>
     )
+  }
+
+  const handleRegister = () => {
+    // Handle registration logic
+    console.log("Registering for event:", event.eventName)
+  }
+
+  // Render appropriate microsite based on category
+  if (event.category && (event.category.toLowerCase() === "corporate event" || event.category.toLowerCase() === "conference" || event.category.toLowerCase() === "workshop")) {
+    // Prepare event object with proper structure for CorporateMicrosite
+    const eventData = {
+      title: event.eventName || "Event",
+      description: event.description || "",
+      date: event.startDate,
+      location: event.venue || "",
+      bannerUrl: event.bannerUrl,
+      category: event.category,
+      maxParticipants: event.maxParticipants || 100,
+      registeredCount: event.registeredCount || 0,
+      organizer: {
+        name: event.organizerName || "Event Organizer",
+        company: event.companyName,
+        logo: event.companyLogo
+      },
+      corporateDetails: event.corporateDetails || {},
+      branding: event.branding || {
+        primaryColor: "#2563eb",
+        secondaryColor: "#64748b"
+      }
+    }
+    return <CorporateMicrosite event={eventData} onRegister={handleRegister} />
   }
 
   if (event.category === "hackathon") return <HackathonMicrosite event={event} />

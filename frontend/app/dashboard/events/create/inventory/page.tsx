@@ -22,7 +22,7 @@ import {
   Plus, Trash2, Info, Ticket, Zap,
 } from "lucide-react"
 
-const steps = [
+const stepsBasic = [
   { label: "Event Details", href: "/dashboard/events/create/details" },
   { label: "Inventory Setup", href: "/dashboard/events/create/inventory" },
   { label: "Payment Settings", href: "/dashboard/events/create/payments" },
@@ -351,7 +351,7 @@ export default function CreateEventInventoryPage() {
         </p>
       </div>
 
-      <StepProgress steps={steps} currentStep={1} />
+      <StepProgress steps={stepsBasic} currentStep={1} />
 
       <div className="space-y-6">
         {/* ── Conference ── */}
