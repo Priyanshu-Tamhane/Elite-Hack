@@ -9,17 +9,21 @@ import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
 import { Bell, Send } from "lucide-react"
 import { useToast } from "@/hooks/use-toast"
+import { api } from "@/lib/api"
 
 export default function NotificationsPage() {
   const params = useParams()
   const router = useRouter()
   const { toast } = useToast()
   const slug = params.slug as string
+  const [event, setEvent] = useState<any>(null)
   const [notifications, setNotifications] = useState<any[]>([])
   const [formData, setFormData] = useState({
     title: "",
     message: ""
   })
+
+  const isConference = event?.category === "conference"
 
   useEffect(() => {
     const authKey = sessionStorage.getItem("event_admin")
@@ -28,8 +32,18 @@ export default function NotificationsPage() {
       return
     }
 
-    const saved = JSON.parse(localStorage.getItem(`notifications_${slug}`) || "[]")
-    setNotifications(saved)
+    const loadData = async () => {
+      try {
+        const eventData = await api.getEventBySlug(slug)
+        setEvent(eventData)
+        const notifs = await api.getNotifications(slug)
+        setNotifications(notifs)
+      } catch {
+        const saved = JSON.parse(localStorage.getItem(`notifications_${slug}`) || "[]")
+        setNotifications(saved)
+      }
+    }
+    loadData()
   }, [slug, router])
 
   const handleSendNotification = () => {
@@ -56,7 +70,7 @@ export default function NotificationsPage() {
     <div className="space-y-6">
       <div>
         <h1 className="text-3xl font-bold">Notifications</h1>
-        <p className="text-muted-foreground">Send updates to all guests</p>
+        <p className="text-muted-foreground">Send updates to all {isConference ? "attendees" : "guests"}</p>
       </div>
 
       <Card>

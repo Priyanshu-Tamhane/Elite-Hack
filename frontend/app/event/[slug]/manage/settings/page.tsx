@@ -8,12 +8,14 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Save } from "lucide-react"
 import { useToast } from "@/hooks/use-toast"
+import { api } from "@/lib/api"
 
 export default function EventSettingsPage() {
   const params = useParams()
   const router = useRouter()
   const { toast } = useToast()
   const slug = params.slug as string
+  const [event, setEvent] = useState<any>(null)
   const [formData, setFormData] = useState({
     eventName: "",
     startDate: "",
@@ -23,6 +25,9 @@ export default function EventSettingsPage() {
     email: ""
   })
 
+  const isConference = event?.category === "conference"
+  const isWedding = event?.category === "wedding"
+
   useEffect(() => {
     const authKey = sessionStorage.getItem("event_admin")
     if (authKey !== slug) {
@@ -30,32 +35,59 @@ export default function EventSettingsPage() {
       return
     }
 
-    const publishedEvents = JSON.parse(localStorage.getItem("published_events") || "[]")
-    const event = publishedEvents.find((e: any) => e.slug === slug)
-    
-    if (event) {
-      setFormData({
-        eventName: event.eventName || "",
-        startDate: event.startDate || "",
-        venue: event.venue || "",
-        contactPerson: event.contactPerson || "",
-        phone: event.phone || "",
-        email: event.email || ""
-      })
+    const loadEvent = async () => {
+      try {
+        const data = await api.getEventBySlug(slug)
+        setEvent(data)
+        setFormData({
+          eventName: data.eventName || "",
+          startDate: data.startDate || "",
+          venue: data.venue || "",
+          contactPerson: data.contact?.name || data.contactPerson || "",
+          phone: data.contact?.phone || data.phone || "",
+          email: data.contact?.email || data.email || "",
+        })
+      } catch {
+        const publishedEvents = JSON.parse(localStorage.getItem("published_events") || "[]")
+        const found = publishedEvents.find((e: any) => e.slug === slug)
+        if (found) {
+          setEvent(found)
+          setFormData({
+            eventName: found.eventName || "",
+            startDate: found.startDate || "",
+            venue: found.venue || "",
+            contactPerson: found.contactPerson || "",
+            phone: found.phone || "",
+            email: found.email || "",
+          })
+        }
+      }
     }
+    loadEvent()
   }, [slug, router])
 
-  const handleSave = () => {
-    const publishedEvents = JSON.parse(localStorage.getItem("published_events") || "[]")
-    const eventIndex = publishedEvents.findIndex((e: any) => e.slug === slug)
-    
-    if (eventIndex !== -1) {
-      publishedEvents[eventIndex] = {
-        ...publishedEvents[eventIndex],
-        ...formData
-      }
-      localStorage.setItem("published_events", JSON.stringify(publishedEvents))
+  const handleSave = async () => {
+    try {
+      await api.updateEventBySlug(slug, {
+        eventName: formData.eventName,
+        startDate: formData.startDate,
+        venue: formData.venue,
+        contact: {
+          name: formData.contactPerson,
+          phone: formData.phone,
+          email: formData.email,
+        },
+      })
       toast({ title: "Settings saved successfully" })
+    } catch {
+      // Fallback: save to localStorage
+      const publishedEvents = JSON.parse(localStorage.getItem("published_events") || "[]")
+      const eventIndex = publishedEvents.findIndex((e: any) => e.slug === slug)
+      if (eventIndex !== -1) {
+        publishedEvents[eventIndex] = { ...publishedEvents[eventIndex], ...formData }
+        localStorage.setItem("published_events", JSON.stringify(publishedEvents))
+      }
+      toast({ title: "Settings saved locally" })
     }
   }
 
@@ -81,7 +113,7 @@ export default function EventSettingsPage() {
               />
             </div>
             <div>
-              <Label>Wedding Date</Label>
+              <Label>{isWedding ? "Wedding Date" : isConference ? "Conference Date" : "Event Date"}</Label>
               <Input
                 type="date"
                 value={formData.startDate}

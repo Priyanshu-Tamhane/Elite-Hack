@@ -38,14 +38,13 @@ export default function RegisterPage() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     setIsSubmitting(true)
-    
+
     try {
       await api.createRegistration(slug, {
         name,
         email,
         phone,
         guestsCount: 1,
-        status: "pending"
       })
 
       setIsSubmitted(true)
@@ -62,6 +61,14 @@ export default function RegisterPage() {
     } finally {
       setIsSubmitting(false)
     }
+    // const registration = {
+    //   eventSlug: slug,
+    //   name,
+    //   email,
+    //   phone,
+    //   registeredAt: new Date().toISOString(),
+    //   eventCategory: event.category || ""
+    // }
   }
 
   if (!event) {

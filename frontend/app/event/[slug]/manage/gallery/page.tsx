@@ -8,6 +8,7 @@ import { Label } from "@/components/ui/label"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Image, Trash2, Plus } from "lucide-react"
 import { useToast } from "@/hooks/use-toast"
+import { api } from "@/lib/api"
 
 export default function GalleryManagementPage() {
   const params = useParams()
@@ -20,18 +21,27 @@ export default function GalleryManagementPage() {
 
   useEffect(() => {
     const authKey = sessionStorage.getItem("event_admin")
-    
+
     if (authKey !== slug) {
       router.push(`/event/${slug}/manage-login`)
       return
     }
 
-    const publishedEvents = JSON.parse(localStorage.getItem("published_events") || "[]")
-    const foundEvent = publishedEvents.find((e: any) => e.slug === slug)
-    if (foundEvent) {
-      setEvent(foundEvent)
-      setHeroImage(foundEvent.media?.hero_image || "")
+    const loadEvent = async () => {
+      try {
+        const data = await api.getEventBySlug(slug)
+        setEvent(data)
+        setHeroImage(data.media?.hero_image || data.bannerUrl || "")
+      } catch {
+        const publishedEvents = JSON.parse(localStorage.getItem("published_events") || "[]")
+        const foundEvent = publishedEvents.find((e: any) => e.slug === slug)
+        if (foundEvent) {
+          setEvent(foundEvent)
+          setHeroImage(foundEvent.media?.hero_image || "")
+        }
+      }
     }
+    loadEvent()
   }, [slug, router])
 
   const updateEvent = (updatedEvent: any) => {
@@ -95,7 +105,7 @@ export default function GalleryManagementPage() {
     <div className="space-y-6">
       <div>
         <h1 className="text-3xl font-bold">Gallery Management</h1>
-        <p className="text-muted-foreground">Upload and manage wedding photos</p>
+        <p className="text-muted-foreground">Upload and manage {event?.category === "wedding" ? "wedding photos" : "event media"}</p>
       </div>
 
       <Card>
@@ -148,7 +158,7 @@ export default function GalleryManagementPage() {
               Add
             </Button>
           </div>
-          
+
           <div className="grid md:grid-cols-3 gap-4">
             {event.media?.gallery?.map((img: string, idx: number) => (
               <div key={idx} className="relative group">
@@ -164,7 +174,7 @@ export default function GalleryManagementPage() {
               </div>
             ))}
           </div>
-          
+
           {(!event.media?.gallery || event.media.gallery.length === 0) && (
             <p className="text-center text-muted-foreground py-8">No gallery images yet</p>
           )}
