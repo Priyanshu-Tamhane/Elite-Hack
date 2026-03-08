@@ -14,7 +14,6 @@ import {
 } from "@/components/ui/select"
 import { StepProgress } from "@/components/step-progress"
 import { useEventCreation } from "@/lib/event-creation-context"
-import { useEventCreation } from "@/lib/event-creation-context"
 import {
   ArrowRight, ArrowLeft, Grid3X3, CreditCard,
   Shield, Info, Copy, Percent, CheckCircle,
