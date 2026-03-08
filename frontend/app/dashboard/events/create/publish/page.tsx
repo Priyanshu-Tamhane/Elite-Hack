@@ -50,7 +50,8 @@ export default function PublishEventPage() {
   const { eventData } = useEventCreation()
   const category = eventData?.category || ""
 
-  const isCorporateEvent = ['corporate event', 'conference', 'workshop'].includes((category || "").toLowerCase())
+  const isCorporateEvent = (category || "").toLowerCase() === 'corporate event'
+  const isWorkshopEvent = (category || "").toLowerCase() === 'workshop'
   const steps = isCorporateEvent ? stepsCorporate : stepsBasic
   const currentStepIndex = isCorporateEvent ? 4 : 3
 
@@ -72,11 +73,12 @@ export default function PublishEventPage() {
         setEventName(data.eventName || "My Event")
 
         const category = (data.category || "").toLowerCase()
-        const isCorporate = ["corporate event", "conference", "workshop"].includes(category)
-
-        if (isCorporate) {
+        if (category === 'corporate event') {
           setPublicUrl(`${window.location.origin}/corporate-demo`)
           setManageUrl(`${window.location.origin}/corporate-demo/manage`)
+        } else if (category === 'workshop') {
+          setPublicUrl(`${window.location.origin}/workshop-demo`)
+          setManageUrl(`${window.location.origin}/workshop-demo/manage`)
         } else {
           setPublicUrl(`${window.location.origin}/event/${slug}`)
           setManageUrl(`${window.location.origin}/event/${slug}/manage`)
@@ -239,6 +241,9 @@ export default function PublishEventPage() {
       if (isCorporateEvent) {
         setPublicUrl(`${window.location.origin}/corporate-demo`)
         setManageUrl(`${window.location.origin}/corporate-demo/manage`)
+      } else if (isWorkshopEvent) {
+        setPublicUrl(`${window.location.origin}/workshop-demo`)
+        setManageUrl(`${window.location.origin}/workshop-demo/manage`)
       } else {
         setPublicUrl(`${window.location.origin}/event/${slug}`)
         setManageUrl(`${window.location.origin}/event/${slug}/manage`)
