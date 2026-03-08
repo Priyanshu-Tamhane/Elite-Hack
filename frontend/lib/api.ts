@@ -203,6 +203,14 @@ class ApiService {
       method: 'DELETE',
     });
   }
+
+  // AI Assistant
+  async sendAIMessage(message: string, eventData: any) {
+    return this.request('/ai-assistant', {
+      method: 'POST',
+      body: JSON.stringify({ message, eventData }),
+    });
+  }
 }
 
 export const api = new ApiService();

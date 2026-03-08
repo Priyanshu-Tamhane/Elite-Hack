@@ -4,6 +4,7 @@ import { useParams } from "next/navigation"
 import { useEffect, useState } from "react"
 import { api } from "@/lib/api"
 import { ManagementSidebar } from "@/components/management/ManagementSidebar"
+import { EventAssistant } from "@/components/ai/EventAssistant"
 
 export default function EventManageLayout({
   children,
@@ -13,14 +14,20 @@ export default function EventManageLayout({
   const params = useParams()
   const slug = params.slug as string
   const [category, setCategory] = useState<string>("")
+  const [eventData, setEventData] = useState<any>(null)
 
   useEffect(() => {
     const loadCategory = async () => {
       try {
         const event = await api.getEventBySlug(slug)
         setCategory(event.category || "")
-      } catch {
+        setEventData(event)
+        console.log('Event loaded for AI Assistant:', event.eventName)
+      } catch (error) {
+        console.error('Failed to load event:', error)
         setCategory("")
+        // Still set a minimal eventData so chatbot appears
+        setEventData({ slug, eventName: 'Event', category: 'event' })
       }
     }
     loadCategory()
@@ -43,6 +50,7 @@ export default function EventManageLayout({
           </div>
         </footer>
       </div>
+      {eventData && <EventAssistant eventData={eventData} />}
     </div>
   )
 }

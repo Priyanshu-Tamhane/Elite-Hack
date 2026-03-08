@@ -48,11 +48,20 @@ export default function EventsPage() {
       const data = await api.getEvents()
       setEvents(data)
     } catch (error: any) {
-      toast({
-        title: "Error",
-        description: error.message,
-        variant: "destructive",
-      })
+      console.error('Failed to load events:', error)
+      if (error.message.includes('token') || error.message.includes('auth')) {
+        toast({
+          title: "Not Logged In",
+          description: "Please log in to view your events.",
+          variant: "destructive",
+        })
+      } else {
+        toast({
+          title: "Error",
+          description: error.message,
+          variant: "destructive",
+        })
+      }
     } finally {
       setLoading(false)
     }

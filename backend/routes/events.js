@@ -177,6 +177,29 @@ router.post('/:slug/registrations', async (req, res) => {
   }
 });
 
+router.patch('/:slug/registrations/:id', async (req, res) => {
+  try {
+    const event = await Event.findOne({ slug: req.params.slug });
+    if (!event) {
+      return res.status(404).json({ message: 'Event not found' });
+    }
+    
+    const participant = event.participants.id(req.params.id);
+    if (!participant) {
+      return res.status(404).json({ message: 'Registration not found' });
+    }
+    
+    if (req.body.status) {
+      participant.status = req.body.status;
+    }
+    
+    await event.save();
+    res.json({ message: 'Status updated', participant });
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+});
+
 router.delete('/:slug/registrations/:id', async (req, res) => {
   try {
     const event = await Event.findOne({ slug: req.params.slug });
