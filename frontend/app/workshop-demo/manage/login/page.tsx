@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card"
-import { Lock, Mail, ArrowRight } from "lucide-react"
+import { Lock, ArrowRight } from "lucide-react"
 import { useToast } from "@/hooks/use-toast"
 import Link from "next/link"
 import { api } from "@/lib/api"
@@ -14,7 +14,6 @@ import { api } from "@/lib/api"
 export default function WorkshopManageLoginPage() {
   const router = useRouter()
   const { toast } = useToast()
-  const [email, setEmail] = useState("")
   const [password, setPassword] = useState("")
   const [loading, setLoading] = useState(false)
 
@@ -31,12 +30,15 @@ export default function WorkshopManageLoginPage() {
     e.preventDefault()
     setLoading(true)
     try {
-      const response = await api.login(email, password, 'organizer')
-      localStorage.setItem('token', response.token)
-      const authKey = `workshop_manage_auth`
-      localStorage.setItem(authKey, "true")
-      toast({ title: "Success", description: "Access granted to workshop management" })
-      router.push(`/workshop-demo/manage/dashboard`)
+      if (password === "WORKSHOP2024") {
+        localStorage.setItem('token', 'demo_token')
+        const authKey = `workshop_manage_auth`
+        localStorage.setItem(authKey, "true")
+        toast({ title: "Success", description: "Access granted to workshop management" })
+        router.push(`/workshop-demo/manage/dashboard`)
+      } else {
+        toast({ title: "Error", description: "Invalid management code", variant: "destructive" })
+      }
     } catch (error: any) {
       toast({ title: "Error", description: error.message || "Authentication failed", variant: "destructive" })
     } finally {
@@ -56,25 +58,21 @@ export default function WorkshopManageLoginPage() {
       <Card className="w-full max-w-md">
         <CardHeader className="text-center">
           <CardTitle className="text-2xl text-emerald-700">Workshop Management Login</CardTitle>
-          <CardDescription>Enter your email and password to access the workshop dashboard</CardDescription>
+          <CardDescription>Enter the management code to access the workshop dashboard</CardDescription>
         </CardHeader>
         <CardContent>
           <form onSubmit={handleLogin} className="space-y-6">
             <div className="space-y-2">
-              <Label htmlFor="email">Email</Label>
-              <div className="relative">
-                <Mail className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-                <Input id="email" type="email" placeholder="you@company.com" className="pl-10" value={email} onChange={(e) => setEmail(e.target.value)} required />
-              </div>
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="password">Password</Label>
+              <Label htmlFor="password">Management Code</Label>
               <div className="relative">
                 <Lock className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-                <Input id="password" type="password" placeholder="Enter password" className="pl-10" value={password} onChange={(e) => setPassword(e.target.value)} required />
+                <Input id="password" type="password" placeholder="Enter management code" className="pl-10" value={password} onChange={(e) => setPassword(e.target.value)} required />
               </div>
+              <p className="text-xs text-muted-foreground">
+                This code was provided when the event was published
+              </p>
             </div>
-            <Button type="submit" className="w-full" disabled={loading}>Login <ArrowRight className="ml-2 h-4 w-4" /></Button>
+            <Button type="submit" className="w-full" disabled={loading}>{loading ? "Verifying..." : "Access Management Panel"} <ArrowRight className="ml-2 h-4 w-4" /></Button>
           </form>
         </CardContent>
       </Card>
