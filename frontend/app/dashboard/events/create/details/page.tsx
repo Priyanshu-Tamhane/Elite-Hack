@@ -69,7 +69,6 @@ export default function CreateEventDetailsPage() {
   const [contactEmail, setContactEmail] = useState("")
   const [primaryColor, setPrimaryColor] = useState("#2563eb")
   const [secondaryColor, setSecondaryColor] = useState("#64748b")
-  const [logoUrl, setLogoUrl] = useState("")
 
   // Conference-specific fields
   const [tagline, setTagline] = useState("")
