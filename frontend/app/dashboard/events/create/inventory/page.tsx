@@ -11,6 +11,7 @@ import { Progress } from "@/components/ui/progress"
 import { StepProgress } from "@/components/step-progress"
 import { useEventCreation } from "@/lib/event-creation-context"
 import { WeddingInventory } from "@/components/inventory/WeddingInventory"
+import CorporateInventory from "@/components/inventory/CorporateInventory"
 import {
   Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
 } from "@/components/ui/select"
@@ -321,6 +322,7 @@ export default function CreateEventInventoryPage() {
   const [accommodationSlots, setAccommodationSlots] = useState<Record<string, number>>({ twin: 40, suite: 10, bunk: 100 })
   const [weddingData, setWeddingData] = useState<any>({})
   const [conferenceInventoryData, setConferenceInventoryData] = useState<any>({})
+  const [corporateInventoryData, setCorporateInventoryData] = useState<any>({})
 
   // Hackathon state
   const [prizes, setPrizes] = useState({
@@ -444,6 +446,9 @@ export default function CreateEventInventoryPage() {
       })
     } else if (isWedding) {
       inventoryPayload = weddingData
+    } else if (category.toLowerCase() === 'corporate event') {
+      inventoryPayload = corporateInventoryData
+      updateEventData({ inventory: inventoryPayload })
     } else {
       inventoryPayload = {
         totalCapacity: Number(totalCapacity),
@@ -671,6 +676,11 @@ export default function CreateEventInventoryPage() {
             registrationType={registrationType}
             onDataChange={setConferenceInventoryData}
           />
+        )}
+
+        {/* Corporate Inventory */}
+        {category.toLowerCase() === 'corporate event' && (
+          <CorporateInventory onDataChange={setCorporateInventoryData} />
         )}
 
         {/* ── Wedding ── */}

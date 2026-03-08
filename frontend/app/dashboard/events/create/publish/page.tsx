@@ -101,6 +101,12 @@ export default function PublishEventPage() {
     setIsPublishing(true)
     try {
       const data = JSON.parse(savedDetails)
+      // Basic validation to avoid backend validation errors
+      if (!data.eventName || !data.startDate) {
+        toast({ title: "Missing required fields", description: "Please provide an Event Name and Start Date in Step 1.", variant: "destructive" })
+        setIsPublishing(false)
+        return
+      }
       const inventory = savedInventory ? JSON.parse(savedInventory) : {}
       const payments = savedPayments ? JSON.parse(savedPayments) : {}
       const hackathon = hackathonData ? JSON.parse(hackathonData) : {}
@@ -199,17 +205,40 @@ export default function PublishEventPage() {
         publishedEvent.resources = data.resources || []
       }
 
-      await api.createEvent(publishedEvent)
+      // Always persist a local published copy so the microsite and management URL work locally
+      const publishedList = JSON.parse(localStorage.getItem('published_events' ) || '[]')
+      publishedList.push({ ...publishedEvent, _local: true, createdAt: new Date().toISOString() })
+      localStorage.setItem('published_events', JSON.stringify(publishedList))
 
-      // Cleanup all draft keys
+      // Attempt backend creation but do not block the user if it fails
+      try {
+        const created = await api.createEvent(publishedEvent)
+        // if backend returns created event, update local copy with backend id
+        const updated = JSON.parse(localStorage.getItem('published_events') || '[]').map((e: any) => e.slug === created.slug ? { ...e, _id: created._id, _local: false } : e)
+        localStorage.setItem('published_events', JSON.stringify(updated))
+      } catch (err) {
+        console.warn('API createEvent failed, saved locally instead', err)
+      }
+
+      // Cleanup draft keys (keep published_events)
       localStorage.removeItem("event_draft_details")
       localStorage.removeItem("event_draft_inventory")
       localStorage.removeItem("event_draft_payments")
       localStorage.removeItem("hackathon_inventory_draft")
 
       setManagementPassword(password)
+      setEventSlug(slug)
+      // set preview/manage urls even if backend failed
+      if (isCorporateEvent) {
+        setPublicUrl(`${window.location.origin}/corporate-demo`)
+        setManageUrl(`${window.location.origin}/corporate-demo/manage`)
+      } else {
+        setPublicUrl(`${window.location.origin}/event/${slug}`)
+        setManageUrl(`${window.location.origin}/event/${slug}/manage`)
+      }
+
       setIsPublished(true)
-      toast({ title: "Event Published! 🎉", description: "Your event microsite is now live." })
+      toast({ title: "Event Published! 🎉", description: "Your event microsite is now live (local preview)." })
     } catch (error: any) {
       toast({
         title: "Error",

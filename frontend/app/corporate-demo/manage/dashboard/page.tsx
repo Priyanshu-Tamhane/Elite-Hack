@@ -4,6 +4,8 @@ import { useState, useEffect } from "react"
 import { useRouter } from "next/navigation"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Users, Calendar, DollarSign, Eye, LogOut } from "lucide-react"
+import { StatsCard } from "@/components/stats-card"
+import { Badge } from "@/components/ui/badge"
 import Link from "next/link"
 import { Button } from "@/components/ui/button"
 import { useToast } from "@/hooks/use-toast"
@@ -12,6 +14,10 @@ export default function CorporateManageDashboard() {
   const router = useRouter()
   const { toast } = useToast()
   const [registrations, setRegistrations] = useState<any[]>([])
+  const [eventName, setEventName] = useState("Corporate Demo Event")
+  const [confirmedCount, setConfirmedCount] = useState(0)
+  const [declinedCount, setDeclinedCount] = useState(0)
+  const [pendingCount, setPendingCount] = useState(0)
 
   useEffect(() => {
     // auth check
@@ -23,7 +29,20 @@ export default function CorporateManageDashboard() {
 
     // load registrations from storage
     const allRegs = JSON.parse(localStorage.getItem("event_registrations") || "[]")
-    setRegistrations(allRegs.filter((r: any) => r.eventCategory === "corporate"))
+    const regs = allRegs.filter((r: any) => (r.eventCategory || r.category || '').toLowerCase().includes("corporate"))
+    setRegistrations(regs)
+
+    // derive counts
+    setConfirmedCount(regs.filter((r: any) => r.status === 'confirmed').length)
+    setDeclinedCount(regs.filter((r: any) => r.status === 'declined').length)
+    setPendingCount(regs.filter((r: any) => !r.status || r.status === 'pending').length)
+
+    // try to load a published corporate event name
+    try {
+      const published = JSON.parse(localStorage.getItem('published_events') || '[]')
+      const corp = published.find((e: any) => (e.category || '').toLowerCase().includes('corporate')) || published.find((e: any) => e.slug === 'corporate-demo')
+      if (corp) setEventName(corp.eventName || 'Corporate Demo Event')
+    } catch (e) { }
   }, [router])
 
   const handleLogout = () => {
@@ -51,80 +70,52 @@ export default function CorporateManageDashboard() {
 
       {/* statistic cards */}
       <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4">
-        <Card className="bg-gradient-to-br from-blue-50 to-blue-100 border-0 shadow-lg">
-          <CardHeader className="flex items-center justify-between pb-2">
-            <CardTitle className="text-sm font-medium text-blue-800">Registrations</CardTitle>
-            <Users className="h-5 w-5 text-blue-500" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-3xl font-bold text-blue-600">{registrations.length}</div>
-          </CardContent>
-        </Card>
-
-        <Card className="bg-gradient-to-br from-green-50 to-green-100 border-0 shadow-lg">
-          <CardHeader className="flex items-center justify-between pb-2">
-            <CardTitle className="text-sm font-medium text-green-800">Event Date</CardTitle>
-            <Calendar className="h-5 w-5 text-green-500" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-3xl font-bold text-green-600">Dec 15, 2024</div>
-          </CardContent>
-        </Card>
-
-        <Card className="bg-gradient-to-br from-yellow-50 to-yellow-100 border-0 shadow-lg">
-          <CardHeader className="flex items-center justify-between pb-2">
-            <CardTitle className="text-sm font-medium text-yellow-800">Revenue</CardTitle>
-            <DollarSign className="h-5 w-5 text-yellow-500" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-3xl font-bold text-yellow-600">$0</div>
-          </CardContent>
-        </Card>
-
-        <Card className="bg-gradient-to-br from-purple-50 to-purple-100 border-0 shadow-lg">
-          <CardHeader className="flex items-center justify-between pb-2">
-            <CardTitle className="text-sm font-medium text-purple-800">Page Views</CardTitle>
-            <Eye className="h-5 w-5 text-purple-500" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-3xl font-bold text-purple-600">-</div>
-          </CardContent>
-        </Card>
+        <StatsCard title="Registrations" value={registrations.length} icon={Users} />
+        <StatsCard title="Confirmed" value={confirmedCount} icon={Calendar} />
+        <StatsCard title="Pending" value={pendingCount} icon={Eye} />
+        <StatsCard title="Declined" value={declinedCount} icon={DollarSign} />
       </div>
 
       {/* actions */}
-      <Card className="border-blue-200">
+      <Card>
         <CardHeader>
-          <CardTitle className="text-lg text-blue-700">Quick Actions</CardTitle>
+          <CardTitle>Quick Actions</CardTitle>
         </CardHeader>
-        <CardContent className="space-y-3">
-          <Button variant="outline" className="w-full justify-start" asChild>
+        <CardContent className="space-y-2">
+          <Button className="w-full justify-start" asChild>
             <Link href="/corporate-demo" target="_blank">View Demo Microsite</Link>
           </Button>
           <Button variant="outline" className="w-full justify-start">View Registrations</Button>
           <Button variant="outline" className="w-full justify-start">Export Data</Button>
+          <Button variant="outline" className="w-full justify-start">Settings</Button>
         </CardContent>
       </Card>
 
       {/* recent regs */}
-      <Card className="border-blue-200">
+      <Card>
         <CardHeader>
-          <CardTitle className="text-lg text-blue-700">Recent Registrations</CardTitle>
+          <CardTitle>Recent Registrations</CardTitle>
         </CardHeader>
         <CardContent>
           {registrations.length === 0 ? (
-            <p className="text-gray-500">No registrations yet</p>
+            <p className="text-muted-foreground text-center py-8">No registrations yet</p>
           ) : (
-            <div className="space-y-2">
-              {registrations.slice(0, 5).map((reg, idx) => (
-                <div key={idx} className="flex justify-between items-center p-3 border rounded hover:bg-blue-50 transition">
-                  <div>
-                    <p className="font-semibold text-blue-600">{reg.name}</p>
-                    <p className="text-sm text-gray-500">{reg.email}</p>
+            <div className="space-y-3">
+              {registrations.slice(0, 6).map((reg, idx) => (
+                <div key={idx} className="flex items-center justify-between p-3 border rounded-lg hover:bg-muted/50 transition-colors">
+                  <div className="flex-1">
+                    <p className="font-medium">{reg.name}</p>
+                    <p className="text-sm text-muted-foreground">{reg.phone || reg.email}</p>
                   </div>
-                  <p className="text-xs text-gray-400">
-                    {new Date(reg.registeredAt).toLocaleDateString()}
-                  </p>
+                  <div className="flex items-center gap-4">
+                    <div className="text-right">
+                      <p className="text-sm font-medium">{reg.ticketType || (reg.guestsCount ? `${reg.guestsCount} guests` : 'Participant')}</p>
+                      <p className="text-xs text-muted-foreground">{new Date(reg.registeredAt).toLocaleDateString()}</p>
+                    </div>
+                    <Badge variant={reg.status === 'confirmed' ? 'default' : reg.status === 'declined' ? 'destructive' : 'secondary'}>
+                      {reg.status || 'Pending'}
+                    </Badge>
+                  </div>
                 </div>
               ))}
             </div>
