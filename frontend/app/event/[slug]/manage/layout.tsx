@@ -1,7 +1,9 @@
 "use client"
 
 import { useParams } from "next/navigation"
-import { WeddingManagementSidebar } from "@/components/management/wedding/WeddingManagementSidebar"
+import { useEffect, useState } from "react"
+import { api } from "@/lib/api"
+import { ManagementSidebar } from "@/components/management/ManagementSidebar"
 
 export default function EventManageLayout({
   children,
@@ -10,10 +12,23 @@ export default function EventManageLayout({
 }) {
   const params = useParams()
   const slug = params.slug as string
+  const [category, setCategory] = useState<string>("")
+
+  useEffect(() => {
+    const loadCategory = async () => {
+      try {
+        const event = await api.getEventBySlug(slug)
+        setCategory(event.category || "")
+      } catch {
+        setCategory("")
+      }
+    }
+    loadCategory()
+  }, [slug])
 
   return (
     <div className="min-h-screen bg-muted/30">
-      <WeddingManagementSidebar slug={slug} />
+      <ManagementSidebar slug={slug} category={category} />
       <div className="ml-56">
         <main className="p-6">
           {children}

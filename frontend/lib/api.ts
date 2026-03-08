@@ -3,7 +3,7 @@ const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api';
 class ApiService {
   async request(endpoint: string, options: RequestInit = {}) {
     const token = localStorage.getItem('token');
-    
+
     const config: RequestInit = {
       ...options,
       headers: {
@@ -98,6 +98,13 @@ class ApiService {
   async deleteRegistration(slug: string, id: string) {
     return this.request(`/events/${slug}/registrations/${id}`, {
       method: 'DELETE',
+    });
+  }
+
+  async updateRegistrationStatus(slug: string, id: string, status: string) {
+    return this.request(`/events/${slug}/registrations/${id}`, {
+      method: 'PATCH',
+      body: JSON.stringify({ status }),
     });
   }
 

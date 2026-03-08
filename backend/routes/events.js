@@ -57,11 +57,11 @@ router.post('/:slug/register', async (req, res) => {
     if (!event) {
       return res.status(404).json({ message: 'Event not found' });
     }
-    
+
     event.participants.push(req.body);
     event.registeredCount = event.participants.length;
     await event.save();
-    
+
     if (req.body.email && req.body.name) {
       await sendRegistrationEmail(
         req.body.email,
@@ -75,7 +75,7 @@ router.post('/:slug/register', async (req, res) => {
         }
       );
     }
-    
+
     res.status(201).json({ message: 'Registration successful', event });
   } catch (error) {
     res.status(500).json({ message: error.message });
@@ -126,7 +126,7 @@ router.delete('/:id', auth, async (req, res) => {
   }
 });
 
-// ===== REGISTRATIONS (Wedding Management) =====
+// ===== REGISTRATIONS =====
 
 router.get('/:slug/registrations', async (req, res) => {
   try {
@@ -143,9 +143,42 @@ router.post('/:slug/registrations', async (req, res) => {
     if (!event) {
       return res.status(404).json({ message: 'Event not found' });
     }
-    const registration = new Registration({ ...req.body, eventId: event._id, eventSlug: req.params.slug });
+
+    // Auto-confirm for conference & hackathon events
+    const autoConfirmCategories = ['conference', 'hackathon', 'workshop'];
+    const status = autoConfirmCategories.includes(event.category)
+      ? 'confirmed'
+      : (req.body.status || 'pending');
+
+    const registration = new Registration({
+      ...req.body,
+      status,
+      eventId: event._id,
+      eventSlug: req.params.slug,
+    });
     await registration.save();
     res.status(201).json(registration);
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+});
+
+// Update registration status (confirm / decline / pending)
+router.patch('/:slug/registrations/:id', async (req, res) => {
+  try {
+    const { status } = req.body;
+    if (!['pending', 'confirmed', 'declined'].includes(status)) {
+      return res.status(400).json({ message: 'Invalid status. Use: pending, confirmed, or declined' });
+    }
+    const registration = await Registration.findByIdAndUpdate(
+      req.params.id,
+      { status },
+      { new: true }
+    );
+    if (!registration) {
+      return res.status(404).json({ message: 'Registration not found' });
+    }
+    res.json(registration);
   } catch (error) {
     res.status(500).json({ message: error.message });
   }

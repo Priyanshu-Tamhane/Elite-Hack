@@ -1,12 +1,26 @@
 "use client"
 
-import { useEffect, useState } from "react"
+import { useEffect, useState, lazy, Suspense } from "react"
 import { useParams } from "next/navigation"
 import { HackathonMicrosite } from "@/components/microsites/HackathonMicrosite"
 import { WeddingMicrosite } from "@/components/microsites/WeddingMicrosite"
 import { DefaultMicrosite } from "@/components/microsites/DefaultMicrosite"
 import { api } from "@/lib/api"
-import CorporateMicrosite from "@/components/microsites/CorporateMicrosite"
+
+// Lazy-load the conference microsite for better performance
+const ConferenceMicrosite = lazy(() =>
+  import("@/components/microsites/ConferenceMicrosite").then(m => ({ default: m.ConferenceMicrosite }))
+)
+
+function LoadingScreen() {
+  return (
+    <div style={{ minHeight: "100vh", display: "flex", alignItems: "center", justifyContent: "center", background: "#080812", color: "#94a3b8", flexDirection: "column", gap: "1rem" }}>
+      <div style={{ width: 40, height: 40, border: "3px solid rgba(99,102,241,0.2)", borderTopColor: "#6366f1", borderRadius: "50%", animation: "spin 0.8s linear infinite" }} />
+      <p style={{ fontSize: "0.9rem", letterSpacing: "0.05em" }}>Loading event...</p>
+      <style>{`@keyframes spin{to{transform:rotate(360deg)}}`}</style>
+    </div>
+  )
+}
 
 export default function EventMicrositePage() {
   const params = useParams()
@@ -28,63 +42,29 @@ export default function EventMicrositePage() {
     loadEvent()
   }, [slug])
 
-  if (loading) {
-    return (
-      <div className="min-h-screen flex items-center justify-center">
-        <p>Loading event...</p>
-      </div>
-    )
-  }
+  if (loading) return <LoadingScreen />
 
   if (!event) {
     return (
       <div className="min-h-screen flex items-center justify-center">
         <div className="text-center">
           <h1 className="text-4xl font-bold mb-4">Event Not Found</h1>
-          <p className="text-muted-foreground">The event you're looking for doesn't exist.</p>
+          <p className="text-muted-foreground">The event you&apos;re looking for doesn&apos;t exist.</p>
         </div>
       </div>
     )
   }
 
-  const handleRegister = () => {
-    // Handle registration logic
-    console.log("Registering for event:", event.eventName)
-  }
-
-  // Render appropriate microsite based on category
-  if (event.category && (event.category.toLowerCase() === "corporate event" || event.category.toLowerCase() === "conference" || event.category.toLowerCase() === "workshop")) {
-    // Prepare event object with proper structure for CorporateMicrosite
-    const eventData = {
-      title: event.eventName || "Event",
-      description: event.description || "",
-      date: event.startDate,
-      location: event.venue || "",
-      bannerUrl: event.bannerUrl,
-      category: event.category,
-      maxParticipants: event.maxParticipants || 100,
-      registeredCount: event.registeredCount || 0,
-      organizer: {
-        name: event.organizerName || "Event Organizer",
-        company: event.companyName,
-        logo: event.companyLogo
-      },
-      corporateDetails: event.corporateDetails || {},
-      branding: event.branding || {
-        primaryColor: "#2563eb",
-        secondaryColor: "#64748b"
-      }
-    }
-    return <CorporateMicrosite event={eventData} onRegister={handleRegister} />
-  }
-
-  if (event.category === "hackathon") {
-    return <HackathonMicrosite event={event} />
-  }
-
-  if (event.category === "wedding") {
-    return <WeddingMicrosite event={event} />
+  if (event.category === "hackathon") return <HackathonMicrosite event={event} />
+  if (event.category === "wedding") return <WeddingMicrosite event={event} />
+  if (event.category === "conference") {
+    return (
+      <Suspense fallback={<LoadingScreen />}>
+        <ConferenceMicrosite event={event} />
+      </Suspense>
+    )
   }
 
   return <DefaultMicrosite event={event} />
 }
+

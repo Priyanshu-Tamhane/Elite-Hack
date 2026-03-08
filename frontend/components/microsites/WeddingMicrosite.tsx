@@ -49,7 +49,6 @@ export function WeddingMicrosite({ event }: WeddingMicrositeProps) {
         phone: formData.phone,
         guestsCount: parseInt(formData.guests),
         mealPreference: formData.meal,
-        status: "pending"
       })
       alert("RSVP submitted successfully!")
       setFormData({ name: "", phone: "", guests: "1", meal: "veg" })
@@ -93,8 +92,10 @@ export function WeddingMicrosite({ event }: WeddingMicrositeProps) {
         <div style={{ display: "flex", gap: 32 }}>
           {["Story", "Ceremonies", "RSVP", "Gallery", "Contact"].map((l) => (
             <button key={l} onClick={() => scrollToSection(l.toLowerCase())} className="wedding-body"
-              style={{ background: "none", border: "none", cursor: "pointer", fontSize: 13, letterSpacing: 3,
-                textTransform: "uppercase", color: scrolled ? "#1a1008" : "rgba(255,255,255,0.9)", padding: "4px 0" }}>
+              style={{
+                background: "none", border: "none", cursor: "pointer", fontSize: 13, letterSpacing: 3,
+                textTransform: "uppercase", color: scrolled ? "#1a1008" : "rgba(255,255,255,0.9)", padding: "4px 0"
+              }}>
               {l}
             </button>
           ))}
@@ -105,7 +106,7 @@ export function WeddingMicrosite({ event }: WeddingMicrositeProps) {
       <section style={{
         minHeight: "100vh", position: "relative", display: "flex", flexDirection: "column",
         alignItems: "center", justifyContent: "center", overflow: "hidden",
-        background: event.bannerUrl 
+        background: event.bannerUrl
           ? `linear-gradient(rgba(10,6,3,0.45), rgba(10,6,3,0.55)), url(${event.bannerUrl}) center/cover`
           : `linear-gradient(135deg, #1a0f06 0%, #2e1a0a 50%, ${primaryColor}55 100%)`
       }}>
@@ -116,8 +117,10 @@ export function WeddingMicrosite({ event }: WeddingMicrositeProps) {
             </span>
           </div>
           <div className="fade-up-2" style={{ margin: "28px 0 0" }}>
-            <h1 className="wedding-display" style={{ fontSize: "clamp(56px, 13vw, 128px)", fontWeight: 400, color: "#fff",
-              margin: 0, lineHeight: 0.88, letterSpacing: -3, textShadow: `0 0 120px ${primaryColor}55` }}>
+            <h1 className="wedding-display" style={{
+              fontSize: "clamp(56px, 13vw, 128px)", fontWeight: 400, color: "#fff",
+              margin: 0, lineHeight: 0.88, letterSpacing: -3, textShadow: `0 0 120px ${primaryColor}55`
+            }}>
               {event.eventName}
             </h1>
           </div>
@@ -135,23 +138,29 @@ export function WeddingMicrosite({ event }: WeddingMicrositeProps) {
           </div>
           <div className="fade-up-4" style={{ display: "flex", gap: 16, justifyContent: "center", marginTop: 52 }}>
             {[{ label: "Days", v: countdown.days }, { label: "Hours", v: countdown.hours },
-              { label: "Mins", v: countdown.minutes }, { label: "Secs", v: countdown.seconds }].map(({ label, v }) => (
+            { label: "Mins", v: countdown.minutes }, { label: "Secs", v: countdown.seconds }].map(({ label, v }) => (
               <div key={label} style={{ textAlign: "center" }}>
-                <div style={{ width: 84, height: 84, border: `1px solid ${primaryColor}50`, background: "rgba(255,255,255,0.05)",
+                <div style={{
+                  width: 84, height: 84, border: `1px solid ${primaryColor}50`, background: "rgba(255,255,255,0.05)",
                   backdropFilter: "blur(10px)", borderRadius: 6, display: "flex", alignItems: "center", justifyContent: "center",
-                  animation: label === "Secs" ? "pulse 1s ease-in-out infinite" : "none" }}>
+                  animation: label === "Secs" ? "pulse 1s ease-in-out infinite" : "none"
+                }}>
                   <span className="wedding-display" style={{ fontSize: 34, color: "#fff", fontWeight: 500 }}>
                     {String(v).padStart(2, "0")}
                   </span>
                 </div>
-                <span className="wedding-body" style={{ display: "block", marginTop: 8, fontSize: 10, letterSpacing: 3,
-                  color: primaryColor, textTransform: "uppercase" }}>{label}</span>
+                <span className="wedding-body" style={{
+                  display: "block", marginTop: 8, fontSize: 10, letterSpacing: 3,
+                  color: primaryColor, textTransform: "uppercase"
+                }}>{label}</span>
               </div>
             ))}
           </div>
         </div>
-        <div style={{ position: "absolute", bottom: 36, left: "50%", transform: "translateX(-50%)", color: `${primaryColor}bb`,
-          animation: "float 2.4s ease-in-out infinite" }}>
+        <div style={{
+          position: "absolute", bottom: 36, left: "50%", transform: "translateX(-50%)", color: `${primaryColor}bb`,
+          animation: "float 2.4s ease-in-out infinite"
+        }}>
           <ChevronDown size={28} />
         </div>
       </section>
@@ -167,22 +176,28 @@ export function WeddingMicrosite({ event }: WeddingMicrositeProps) {
               </span>
               <div style={{ flex: 1, height: 1, background: `${primaryColor}30` }} />
             </div>
-            <h2 className="wedding-display" style={{ fontSize: "clamp(32px,5vw,52px)", fontWeight: 400, lineHeight: 1.15,
-              margin: "0 0 40px", color: "#1a1008" }}>How It All Began</h2>
+            <h2 className="wedding-display" style={{
+              fontSize: "clamp(32px,5vw,52px)", fontWeight: 400, lineHeight: 1.15,
+              margin: "0 0 40px", color: "#1a1008"
+            }}>How It All Began</h2>
             <p className="wedding-display" style={{ fontSize: 20, fontStyle: "italic", lineHeight: 1.9, color: "#5c3d22", marginBottom: 40 }}>
               "{event.description}"
             </p>
           </div>
           <div style={{ position: "relative" }}>
             {event.media?.hero_image ? (
-              <div style={{ width: "100%", aspectRatio: "3/4", borderRadius: 4, overflow: "hidden",
-                boxShadow: "0 8px 32px rgba(0,0,0,0.12)", border: `1px solid ${primaryColor}30` }}>
+              <div style={{
+                width: "100%", aspectRatio: "3/4", borderRadius: 4, overflow: "hidden",
+                boxShadow: "0 8px 32px rgba(0,0,0,0.12)", border: `1px solid ${primaryColor}30`
+              }}>
                 <img src={event.media.hero_image} alt="Our Photo" style={{ width: "100%", height: "100%", objectFit: "cover" }} />
               </div>
             ) : (
-              <div style={{ width: "100%", aspectRatio: "3/4", background: `linear-gradient(145deg, ${primaryColor}20, #f5ecd7)`,
+              <div style={{
+                width: "100%", aspectRatio: "3/4", background: `linear-gradient(145deg, ${primaryColor}20, #f5ecd7)`,
                 borderRadius: 4, border: `1px solid ${primaryColor}30`, display: "flex", alignItems: "center",
-                justifyContent: "center", flexDirection: "column", gap: 12 }}>
+                justifyContent: "center", flexDirection: "column", gap: 12
+              }}>
                 <Heart size={48} style={{ color: primaryColor }} />
                 <span className="wedding-body" style={{ fontSize: 13, letterSpacing: 3, color: primaryColor }}>Our Photo</span>
               </div>
@@ -209,10 +224,14 @@ export function WeddingMicrosite({ event }: WeddingMicrositeProps) {
             </div>
             <div style={{ display: "grid", gridTemplateColumns: `repeat(${Math.min(event.schedule.length, 3)}, 1fr)`, gap: 2 }}>
               {event.schedule.map((c: any, i: number) => (
-                <div key={i} style={{ background: i % 2 === 0 ? `${primaryColor}15` : `${primaryColor}08`,
-                  borderTop: `2px solid ${primaryColor}30`, padding: "44px 28px", textAlign: "center" }}>
-                  <div className="wedding-body" style={{ fontSize: 10, color: primaryColor, letterSpacing: 4,
-                    textTransform: "uppercase", marginBottom: 10 }}>{c.date}</div>
+                <div key={i} style={{
+                  background: i % 2 === 0 ? `${primaryColor}15` : `${primaryColor}08`,
+                  borderTop: `2px solid ${primaryColor}30`, padding: "44px 28px", textAlign: "center"
+                }}>
+                  <div className="wedding-body" style={{
+                    fontSize: 10, color: primaryColor, letterSpacing: 4,
+                    textTransform: "uppercase", marginBottom: 10
+                  }}>{c.date}</div>
                   <div className="wedding-display" style={{ fontSize: 22, color: "#fff8f0", marginBottom: 6 }}>{c.title}</div>
                   <div className="wedding-body" style={{ fontSize: 14, color: primaryColor, marginBottom: 14 }}>{c.time}</div>
                   {c.venue && (
@@ -243,21 +262,23 @@ export function WeddingMicrosite({ event }: WeddingMicrositeProps) {
                 Will You Join Us?
               </h2>
             </div>
-            <form onSubmit={handleRSVP} style={{ background: "#fff", borderRadius: 8, padding: 48,
-              boxShadow: "0 4px 48px rgba(0,0,0,0.07)", border: `1px solid ${primaryColor}20` }}>
+            <form onSubmit={handleRSVP} style={{
+              background: "#fff", borderRadius: 8, padding: 48,
+              boxShadow: "0 4px 48px rgba(0,0,0,0.07)", border: `1px solid ${primaryColor}20`
+            }}>
               <div style={{ display: "flex", flexDirection: "column", gap: 24 }}>
                 <div>
                   <Label className="wedding-body" style={{ fontSize: 11, letterSpacing: 3, color: "#8b6a3e", textTransform: "uppercase" }}>
                     Full Name
                   </Label>
-                  <Input value={formData.name} onChange={(e) => setFormData({...formData, name: e.target.value})}
+                  <Input value={formData.name} onChange={(e) => setFormData({ ...formData, name: e.target.value })}
                     placeholder="Your full name" required style={{ marginTop: 8, borderColor: `${primaryColor}30` }} />
                 </div>
                 <div>
                   <Label className="wedding-body" style={{ fontSize: 11, letterSpacing: 3, color: "#8b6a3e", textTransform: "uppercase" }}>
                     Phone Number
                   </Label>
-                  <Input type="tel" value={formData.phone} onChange={(e) => setFormData({...formData, phone: e.target.value})}
+                  <Input type="tel" value={formData.phone} onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
                     placeholder="+91 00000 00000" required style={{ marginTop: 8, borderColor: `${primaryColor}30` }} />
                 </div>
                 <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 20 }}>
@@ -267,7 +288,7 @@ export function WeddingMicrosite({ event }: WeddingMicrositeProps) {
                         Guests
                       </Label>
                       <Input type="number" min="1" max={event.rsvp_settings.max_guests} value={formData.guests}
-                        onChange={(e) => setFormData({...formData, guests: e.target.value})} style={{ marginTop: 8, borderColor: `${primaryColor}30` }} />
+                        onChange={(e) => setFormData({ ...formData, guests: e.target.value })} style={{ marginTop: 8, borderColor: `${primaryColor}30` }} />
                     </div>
                   )}
                   {event.rsvp_settings.meal_preference && (
@@ -275,9 +296,11 @@ export function WeddingMicrosite({ event }: WeddingMicrositeProps) {
                       <Label className="wedding-body" style={{ fontSize: 11, letterSpacing: 3, color: "#8b6a3e", textTransform: "uppercase" }}>
                         Meal
                       </Label>
-                      <select value={formData.meal} onChange={(e) => setFormData({...formData, meal: e.target.value})}
-                        style={{ width: "100%", marginTop: 8, padding: "10px", borderRadius: 6, border: `1px solid ${primaryColor}30`,
-                        background: "#fff", fontSize: 14 }}>
+                      <select value={formData.meal} onChange={(e) => setFormData({ ...formData, meal: e.target.value })}
+                        style={{
+                          width: "100%", marginTop: 8, padding: "10px", borderRadius: 6, border: `1px solid ${primaryColor}30`,
+                          background: "#fff", fontSize: 14
+                        }}>
                         <option value="veg">Vegetarian</option>
                         <option value="nonveg">Non-Vegetarian</option>
                         <option value="vegan">Vegan</option>
@@ -285,8 +308,10 @@ export function WeddingMicrosite({ event }: WeddingMicrositeProps) {
                     </div>
                   )}
                 </div>
-                <Button type="submit" className="wedding-body" style={{ background: primaryColor, marginTop: 8, padding: "18px",
-                  fontSize: 13, letterSpacing: 4, textTransform: "uppercase" }}>
+                <Button type="submit" className="wedding-body" style={{
+                  background: primaryColor, marginTop: 8, padding: "18px",
+                  fontSize: 13, letterSpacing: 4, textTransform: "uppercase"
+                }}>
                   Confirm Attendance
                 </Button>
               </div>
@@ -307,8 +332,10 @@ export function WeddingMicrosite({ event }: WeddingMicrositeProps) {
                 </span>
                 <div style={{ flex: 1, height: 1, background: `${primaryColor}30` }} />
               </div>
-              <h2 className="wedding-display" style={{ fontSize: "clamp(32px,5vw,52px)", fontWeight: 400, margin: 0, color: "#1a1008",
-                textAlign: "center" }}>{event.accommodation.hotel_name}</h2>
+              <h2 className="wedding-display" style={{
+                fontSize: "clamp(32px,5vw,52px)", fontWeight: 400, margin: 0, color: "#1a1008",
+                textAlign: "center"
+              }}>{event.accommodation.hotel_name}</h2>
             </div>
             <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 14 }}>
               {[
@@ -316,8 +343,10 @@ export function WeddingMicrosite({ event }: WeddingMicrositeProps) {
                 { label: "Suites", count: event.accommodation.suites, icon: "🏨" },
                 { label: "Bunk Beds", count: event.accommodation.bunk_beds, icon: "🪵" }
               ].filter(r => r.count).map((r, i) => (
-                <div key={i} style={{ padding: "32px 28px", background: "#FFFCF8", borderLeft: `3px solid ${primaryColor}`,
-                  borderRadius: "0 6px 6px 0", boxShadow: "0 2px 12px rgba(0,0,0,0.05)", textAlign: "center" }}>
+                <div key={i} style={{
+                  padding: "32px 28px", background: "#FFFCF8", borderLeft: `3px solid ${primaryColor}`,
+                  borderRadius: "0 6px 6px 0", boxShadow: "0 2px 12px rgba(0,0,0,0.05)", textAlign: "center"
+                }}>
                   <div style={{ fontSize: 32, marginBottom: 12 }}>{r.icon}</div>
                   <div className="wedding-display" style={{ fontSize: 20, color: "#1a1008", marginBottom: 4 }}>{r.label}</div>
                   <div className="wedding-body" style={{ fontSize: 13, color: "#8b6a3e" }}>{r.count} available</div>
@@ -352,8 +381,10 @@ export function WeddingMicrosite({ event }: WeddingMicrositeProps) {
               ))}
             </div>
           ) : (
-            <div style={{ textAlign: "center", padding: "80px 24px", background: `linear-gradient(135deg, ${primaryColor}08, #f5ecd744)`,
-              border: `1px solid ${primaryColor}20`, borderRadius: 8 }}>
+            <div style={{
+              textAlign: "center", padding: "80px 24px", background: `linear-gradient(135deg, ${primaryColor}08, #f5ecd744)`,
+              border: `1px solid ${primaryColor}20`, borderRadius: 8
+            }}>
               <Camera size={52} style={{ color: primaryColor, marginBottom: 20 }} />
               <p className="wedding-display" style={{ fontSize: 24, color: "#1a1008", fontStyle: "italic", margin: "0 0 8px" }}>
                 Coming Soon
@@ -398,8 +429,10 @@ export function WeddingMicrosite({ event }: WeddingMicrositeProps) {
       )}
 
       {/* CTA */}
-      <section style={{ position: "relative", padding: "100px 24px", background: `linear-gradient(135deg, #1a0f06, #2e1a0a, ${primaryColor}66)`,
-        textAlign: "center" }}>
+      <section style={{
+        position: "relative", padding: "100px 24px", background: `linear-gradient(135deg, #1a0f06, #2e1a0a, ${primaryColor}66)`,
+        textAlign: "center"
+      }}>
         <Heart size={52} style={{ color: primaryColor, marginBottom: 24 }} />
         <h2 className="wedding-display" style={{ fontSize: "clamp(32px,5vw,56px)", fontWeight: 400, color: "#fff8f0", margin: "0 0 16px" }}>
           Join Us on Our Special Day
@@ -409,8 +442,10 @@ export function WeddingMicrosite({ event }: WeddingMicrositeProps) {
         </p>
         {event.rsvp_settings?.enabled && (
           <button onClick={() => scrollToSection("rsvp")} className="wedding-body"
-            style={{ padding: "18px 52px", background: primaryColor, color: "#fff", border: "none", borderRadius: 4,
-            fontSize: 13, letterSpacing: 4, textTransform: "uppercase", cursor: "pointer" }}>
+            style={{
+              padding: "18px 52px", background: primaryColor, color: "#fff", border: "none", borderRadius: 4,
+              fontSize: 13, letterSpacing: 4, textTransform: "uppercase", cursor: "pointer"
+            }}>
             RSVP Now
           </button>
         )}
