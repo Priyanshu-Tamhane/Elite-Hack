@@ -12,7 +12,7 @@ const eventSchema = new mongoose.Schema({
   bannerUrl: { type: String },
   bannerImage: { type: String },
   slug: { type: String, required: true, unique: true },
-  managementPassword: { type: String },
+  managementPassword: { type: String, required: true },
   status: { type: String, enum: ['draft', 'published', 'cancelled'], default: 'draft' },
   organizerId: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true },
   
@@ -41,12 +41,11 @@ const eventSchema = new mongoose.Schema({
   
   // Schedule
   schedule: [{
-    id: String,
-    name: String,
-    title: String,
-    date: String,
+    day: String,
     time: String,
-    venue: String
+    type: String,
+    title: String,
+    description: String
   }],
   
   // Accommodation
@@ -64,8 +63,31 @@ const eventSchema = new mongoose.Schema({
     email: { type: String }
   },
   
-  // Admin credentials
-  adminPassword: { type: String },
+  // Hackathon specific
+  prizes: {
+    first: { amount: String, perks: String },
+    second: { amount: String, perks: String },
+    third: { amount: String, perks: String },
+    special: [{ title: String, amount: String }]
+  },
+  sponsors: [{
+    name: String,
+    tier: String,
+    website: String,
+    description: String
+  }],
+  tracks: [{
+    title: String,
+    description: String
+  }],
+  organizers: [{
+    name: String,
+    role: String,
+    company: String,
+    email: String,
+    twitter: String,
+    linkedin: String
+  }],
   
   maxParticipants: { type: Number },
   registeredCount: { type: Number, default: 0 },
@@ -73,6 +95,11 @@ const eventSchema = new mongoose.Schema({
     name: String,
     email: String,
     phone: String,
+    teamName: String,
+    teamSize: String,
+    experience: String,
+    track: String,
+    bio: String,
     registeredAt: { type: Date, default: Date.now }
   }],
   

@@ -90,6 +90,7 @@ export default function PublishEventPage() {
   const handlePublish = async () => {
     const savedData = localStorage.getItem("event_draft_details")
     const inventoryData = localStorage.getItem("event_draft_inventory")
+    const hackathonData = localStorage.getItem("hackathon_inventory_draft")
     
     if (!savedData) return
 
@@ -97,6 +98,7 @@ export default function PublishEventPage() {
     try {
       const data = JSON.parse(savedData)
       const inventory = inventoryData ? JSON.parse(inventoryData) : {}
+      const hackathon = hackathonData ? JSON.parse(hackathonData) : {}
 
       const slug = generateSlug(data.eventName || "my-event")
       const password = generatePassword()
@@ -116,18 +118,26 @@ export default function PublishEventPage() {
 
       localStorage.removeItem("event_draft_details")
       localStorage.removeItem("event_draft_inventory")
+      localStorage.removeItem("hackathon_inventory_draft")
 
       try {
         const eventDataForApi: any = {
+          eventName: data.eventName,
           title: data.eventName,
-          description: data.description,
+          description: data.description || "No description provided",
           date: data.startDate ? new Date(data.startDate) : undefined,
           location: data.venue,
           category: data.category,
+          startDate: data.startDate,
+          endDate: data.endDate,
+          startTime: data.startTime,
+          venue: data.venue,
           bannerUrl: data.bannerUrl,
+          bannerImage: data.bannerImage,
           maxParticipants: inventory.maxParticipants || 100,
           status: "published",
-          adminPassword: password,
+          managementPassword: password,
+          ...hackathon,
           corporateDetails: {
             companyMission: data.companyMission,
             eventObjectives: data.eventObjectives
@@ -264,7 +274,7 @@ export default function PublishEventPage() {
                   Copy Link
                 </Button>
                 <Button asChild className="flex-1">
-                  <Link href={`/event/${eventSlug}/manage`}>
+                  <Link href={`/event/${eventSlug}/manage`} target="_blank">
                     <ExternalLink className="h-4 w-4 mr-2" />
                     Manage Event
                   </Link>

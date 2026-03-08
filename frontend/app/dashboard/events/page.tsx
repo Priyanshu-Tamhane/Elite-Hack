@@ -182,6 +182,13 @@ export default function EventsPage() {
                         {event.registeredCount || 0} / {event.maxParticipants || 'Unlimited'} registrations
                       </span>
                     </div>
+                    {event.managementPassword && (
+                      <div className="flex items-center gap-2 text-amber-600">
+                        <span className="text-xs font-mono bg-amber-50 px-2 py-1 rounded border border-amber-200">
+                          Password: {event.managementPassword}
+                        </span>
+                      </div>
+                    )}
                   </div>
                 </div>
                 <DropdownMenu>
