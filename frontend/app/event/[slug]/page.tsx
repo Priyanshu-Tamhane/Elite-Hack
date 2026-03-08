@@ -6,6 +6,8 @@ import { HackathonMicrosite } from "@/components/microsites/HackathonMicrosite"
 import { WeddingMicrosite } from "@/components/microsites/WeddingMicrosite"
 import { DefaultMicrosite } from "@/components/microsites/DefaultMicrosite"
 import { FestivalMicrosite } from "@/components/microsites/FestivalMicrosite"
+import WorkshopMicrosite from "@/components/microsites/WorkshopMicrosite"
+import CorporateMicrosite from "@/components/microsites/CorporateMicrosite"
 import { api } from "@/lib/api"
 
 // Lazy-load the conference microsite for better performance
@@ -56,10 +58,15 @@ export default function EventMicrositePage() {
     )
   }
 
-  if (event.category === "hackathon") return <HackathonMicrosite event={event} />
-  if (event.category === "wedding") return <WeddingMicrosite event={event} />
-  if (event.category === "festival") return <FestivalMicrosite event={event} />
-  if (event.category === "conference") {
+  const category = event.category?.toLowerCase()
+  console.log('Event category:', event.category, '| Normalized:', category)
+
+  if (category === "hackathon") return <HackathonMicrosite event={event} />
+  if (category === "wedding") return <WeddingMicrosite event={event} />
+  if (category === "festival") return <FestivalMicrosite event={event} />
+  if (category === "workshop") return <WorkshopMicrosite event={event} />
+  if (category === "corporate event") return <CorporateMicrosite event={event} />
+  if (category === "conference") {
     return (
       <Suspense fallback={<LoadingScreen />}>
         <ConferenceMicrosite event={event} />
@@ -67,6 +74,7 @@ export default function EventMicrositePage() {
     )
   }
 
+  // Default microsite for: other, etc.
   return <DefaultMicrosite event={event} />
 }
 
